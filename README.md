@@ -8,4 +8,5 @@ IDEAS:
 - loop around
 - lamaku assignment
 - monty hall problem
-- 
+- ok so like hear me out. we make the playing field render as a sphere. we use chatgpt for this because it would be hard.
+- Mirrors? 
