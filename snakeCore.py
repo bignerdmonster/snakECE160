@@ -12,10 +12,18 @@ screen.fill('red')
 ## IMPORTANT: ON WEB IOS, ONLY ARROW KEYS AND NON-WORD KEYS WORK!!!
 ## even more important: I LIED!!!! BLAHAHAHAHAHHAHA! 
 while running:
-    keys = pg.key.get_pressed()
-    print("done")
-    print(keys)
-    print("next")
+    for event in pg.event.get():
+        if event.type == pg.QUIT:
+            exit()
+        elif event.type == pg.KEYDOWN:
+            if event.key == pg.K_UP:
+                print("UP!!!")
+                screen.fill("blue")
+        elif event.type == pg.KEYDOWN:
+            if event.key == pg.K_UP:
+                print("UPDWON!!!")
+                screen.fill("red")
+    print("work?")
     pg.display.flip()
-    clock.tick(0.1)
+    clock.tick(15)
 pg.quit()

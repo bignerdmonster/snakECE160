@@ -4,14 +4,15 @@ set -e
 echo "Installing dependencies..."
 #sudo apt-get update -y
 sudo apt-get install -y xvfb x11vnc fluxbox websockify novnc
-
+sudo rm -rf /tmp/.X1-lock
+sudo service x11-common stop
 echo "Starting virtual display..."
 Xvfb :1 -screen 0 1024x768x24 &
 export DISPLAY=:1
 fluxbox &
 
 echo "Starting VNC server..."
-x11vnc -display :1 -nopw -forever -shared -rfbport 5900 &
+x11vnc -display :1 -nopw  -shared -rfbport 5900 &
 
 echo "Starting noVNC on port 6080..."
 websockify --web=/usr/share/novnc 6080 localhost:5900 &
