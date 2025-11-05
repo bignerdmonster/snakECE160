@@ -1,6 +1,18 @@
 import pygame as pg
 from menu import Menu
+import random
 
+#spawns apples randomly
+class Apple:
+    def __init__(self):
+        self.apple_size = 67
+        self.x = random.randrange(0,980)
+        self.y = random.randrange(0,620)
+        self.color = (255,0,0)
+        self.spawn()
+    def spawn(self):
+        apple_but_rect = pg.Rect(self.x, self.y, self.apple_size, self.apple_size)
+        pg.draw.rect(screen, self.color, apple_but_rect)
 
 class SnakeMat:
     def __init__(self, cols=15, rows=10):
@@ -45,13 +57,14 @@ class Snake:
 pg.init()
 screen = pg.display.set_mode((1080,720), pg.SCALED, vsync=1)
 
-
 def snakeGame(menu = Menu(screenInp=screen)): ## this is the actual main game loop function!! yay
+    apple_exist = False
     run = True
     while run:
-
-        
         screen.fill('black')
+        if not apple_exist:
+            Apple()
+            apple_exist = True
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.exit()
@@ -70,10 +83,10 @@ def snakeGame(menu = Menu(screenInp=screen)): ## this is the actual main game lo
 
 
 if __name__ == "__main__":
-    
+
     mainMat = SnakeMat()
     mainSnake = Snake(mainMat)
-    
+    apple = Apple()
     clock = pg.time.Clock()
 
     framerate = 15
