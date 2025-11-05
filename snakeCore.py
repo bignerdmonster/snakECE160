@@ -24,10 +24,12 @@ class Apple:
 
 
 class SnakeMat:
-    def __init__(self, cols=15, rows=10):
+    def __init__(self, cols=15, rows=11):
         ### initalize the matrix. kinda duh-doy type stuff, but important regardless.
-        self.center = [((cols + 1) // 2), ((rows + 1) // 2)]
-        self.mat = [[None for place in range(cols)] for row in range(rows)]
+        self.cols = cols
+        self.rows = rows
+        self.center = [(cols // 2), (rows // 2)]
+        self.mat = [[0 for place in range(cols)] for row in range(rows)]
     def __str__(self): # for debugging of doom and gloom
         retStr = ""
         for row in self.mat:
@@ -40,9 +42,14 @@ class SnakeMat:
         
 
 class Snake:
-    def __init__(self, mat = SnakeMat(), **args): #PLEASE pass custompos as a 3 val array if it is being used.
+    soleSnake = ["how recursive do we have to get"]
+    def __init__(self, sMat = SnakeMat(), **args): #PLEASE pass custompos as a 3 val array if it is being used.
+        Snake.soleSnake[0]=self
         #basically, what if... ehh. how to 
-        self.pos = mat.center[:].append(0) if (not ("startPos" in args.keys())) else args["startPos"] ## this is to create the POSSIBILITY of a third dimension
+        self.hPos = sMat.center[:] if (not ("startPos" in args.keys())) else args["startPos"] ## this is to create the POSSIBILITY of a third dimension
+        self.hPos.append(0) if len(self.hPos) == 2 else 1
+        self.pos = [self.hPos[:]] # what I want is for self.pos to work like this: first, it only has self.hPos (as that's the only position). Then, it has first the old self.hPos, then a new self.hPos incremented by the motion vector, so that the snake moves... hm 
+       
         self.direction = pg.Vector3(0,0,0) ##again, third dimension! because I want it. don't touch it tho.
         # ok how do I do this efficiently? 
         ## args for controls will be in the form controls = {'up': pg.K_UP, 'down': pg.K_DOWN, etc etc}
@@ -56,6 +63,45 @@ class Snake:
             self.down = pg.K_s
             self.left = pg.K_a
             self.right = pg.K_d
+        # tfw the team flare noveau STOP MAKING SNAKE PUNS CLANKER sigh theme slaps so hard
+        self.sMat = sMat
+        sMat.mat[self.hPos[0]][self.hPos[1]] = 2 ## 2 is the snake's head. the AI is mimicking my style. this is black mirror to an extent which i find strange.
+        self.len = 1  # length of snake; used to determine when to pop tail
+        # is that it?
+    def move(self):
+        self.hPos[0] = (self.hPos[0] + int(self.direction.x)) % self.sMat.cols; self.hPos[1] = (self.hPos[1] + int(self.direction.y)) % self.sMat.rows; self.hPos[2] += int(self.direction.z) # increment head position by direction vector
+        # modulo to keep the snake from throwing index errors
+        self.pos.insert(0, self.hPos[:]) ## insert the new head position at the start of the list, allowing for head to remain constant... 0, 1 0, 2 1 0, etc
+        if len(self.pos) > self.len: # you can undertand this one
+            self.pos.pop() ## remove tail 
+            # simple enough!
+    def steer(self, keys):
+        if keys[self.up]:
+            self.direction = pg.Vector3(0,-1,0)
+        elif keys[self.down]:
+            self.direction = pg.Vector3(0,1,0)
+        elif keys[self.left]:
+            self.direction = pg.Vector3(-1,0,0)
+        elif keys[self.right]:
+            self.direction = pg.Vector3(1,0,0)
+        else:
+            pass # I think this is needed... try check
+    def __str__(self):
+       
+        retStr = ""
+        tempMat = [[0 for place in range(self.sMat.cols)] for row in range(self.sMat.rows)]
+        for i, segment in enumerate(self.pos):
+            print(segment)
+            if i == 0:
+                tempMat[segment[1]][segment[0]] = 2 # head
+            else:
+                tempMat[segment[1]][segment[0]] = 1 # body  
+            # holy jank
+        for row in tempMat:
+            retStr += ' '.join([str(elem) for elem in row]) + "\n"
+        return retStr
+
+
 
 #print(snakeMat) -- i could make this a class... ehhhhh 
             
@@ -74,10 +120,12 @@ class Snake:
 ### OH IS THIS IMPLEMENTED IN PYGAME ALREADY -- it IS 
 
 pg.init()
+SNAKE_EVENT = pg.USEREVENT + 1
+pg.time.set_timer(SNAKE_EVENT, 1000) # every 1 ms, the snake allegedly moves.
 screen = pg.display.set_mode((1080,720), pg.SCALED, vsync=1)
 apple = Apple()
 print("bkpoint")
-def snakeGame(menu = Menu(screenInp=screen)): ## this is the actual main game loop function!! yay
+def snakeGame(menu = Menu(screenInp=screen), snake=Snake(SnakeMat())): ## this is the actual main game loop function!! yay
     #apple_exist = False
     run = True
     while run:
@@ -87,13 +135,16 @@ def snakeGame(menu = Menu(screenInp=screen)): ## this is the actual main game lo
             if event.type == pg.QUIT:
                 pg.quit()
                 exit(0)
-        keys = pg.key.get_pressed()
-        if keys[pg.K_w]:
-            Apple()
-        if keys[pg.K_s]:
-            Apple.appleList.clear()
-        if keys[pg.K_ESCAPE]:
+            if event.type == SNAKE_EVENT:
+                snake.move()
+                print(snake)
+        keysPressed = pg.key.get_pressed()
+        if keysPressed[pg.K_ESCAPE]:
             run=False
+        snake.steer(keysPressed)
+        ##copilot my searest, why is this throwing an error?
+        # response: 
+        
         #if not apple_exist:
         #    Apple()
         #    apple_exist = True 
