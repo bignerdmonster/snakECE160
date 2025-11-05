@@ -1,9 +1,6 @@
 import pygame as pg
-pg.init()
-screen = pg.display.set_mode((1080,720), pg.SCALED, vsync=1)
-clock = pg.time.Clock()
-framerate = 15
-running = True
+from menu import Menu
+
 
 class SnakeMat:
     def __init__(self, cols=15, rows=10):
@@ -15,11 +12,11 @@ class SnakeMat:
 class Snake:
     def __init__(self, mat = SnakeMat(), **args): #PLEASE pass custompos as a 3 val array if it is being used.
         #basically, what if... ehh. how to 
-        self.pos = mat.center[:].append(0) if (not args["startPos"]) else args["startPos"] ## this is to create the POSSIBILITY of a third dimension
+        self.pos = mat.center[:].append(0) if (not ("startPos" in args.keys())) else args["startPos"] ## this is to create the POSSIBILITY of a third dimension
         self.direction = pg.Vector3(0,0,0) ##again, third dimension! because I want it. don't touch it tho.
         # ok how do I do this efficiently? 
         ## args for controls will be in the form controls = {'up': pg.K_UP, 'down': pg.K_DOWN, etc etc}
-        if args['controls']:
+        if 'controls' in args.keys():
             self.up = args['controls']['up'] 
             self.down = args['controls']['down']
             self.left = args['controls']['left']
@@ -44,17 +41,45 @@ class Snake:
 ## for the first stage, we just need to make basic snake. that means 4 cardinal directions,
 ## and you shouldn't be able to like... go in the oppisite direction. but that has more logic to it
 ### OH IS THIS IMPLEMENTED IN PYGAME ALREADY -- it IS 
-mainMat = SnakeMat()
-mainSnake = Snake(mainMat)
+
+pg.init()
+screen = pg.display.set_mode((1080,720), pg.SCALED, vsync=1)
 
 
-while running:
-    for event in pg.event.get():
-        if event.type == pg.QUIT:
-            running = False
-    screen.fill('black')
-    keys = pg.key.get_pressed()
-    if keys[pg.K_w]:
-        screen.fill('yellow')
-    pg.display.flip()
-    clock.tick(framerate)
+def snakeGame(menu = Menu(screenInp=screen)): ## this is the actual main game loop function!! yay
+    run = True
+    while run:
+
+        
+        screen.fill('black')
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.exit()
+                quit(0)
+        keys = pg.key.get_pressed()
+        
+        if keys[pg.K_w]:
+            screen.fill('yellow')
+        if keys[pg.K_ESCAPE]:
+            run=False
+        pg.display.flip()
+        clock.tick(framerate)
+    menu.notstop = True
+
+
+
+
+if __name__ == "__main__":
+    
+    mainMat = SnakeMat()
+    mainSnake = Snake(mainMat)
+    
+    clock = pg.time.Clock()
+
+    framerate = 15
+    mainMenu = Menu(screenInp=screen, start_game=None, clocked=clock) #testing w/ start-game = none
+    while True:
+        mainMenu.run()
+        snakeGame(mainMenu)
+else:
+    print("snakeCore imported, or YOU SHOULD RUN THIS WITH python3 snakeCore.py")
