@@ -39,11 +39,7 @@ class Button:
 class Menu:
     def __init__(self, screenInp=None, start_game=None, title="Stake (get it like start and snake lol)",clocked=pg.time.Clock()):
         self.notstop = True
-        if screenInp is None: ## if you're calling Menu by itself (RAGH THESE AI GENERATED COMMENTS ARE PISSING ME OFF)
-            if not pg.get_init(): 
-                pg.init()
-            screenInp = pg.display.set_mode((WIN_W, WIN_H))
-        self.screen = screenInp
+        self.screen = screenInp or pg.display.set_mode((1080, 720), pg.SCALED, vsync=1)
         pg.display.set_caption(title)
         self.clock = clocked
 
