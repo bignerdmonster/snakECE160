@@ -7,7 +7,7 @@ class Apple:
     appleList = []
     def __init__(self):
         Apple.appleList.append(self)
-        self.apple_size = 67
+        self.apple_size = 50
         self.x = random.randrange(0,980)
         self.y = random.randrange(0,620)
         self.color = (255,0,0)
@@ -15,7 +15,10 @@ class Apple:
     
     def spawn(self, screen):
         pg.draw.rect(screen, self.color, self.apple_but_rect)
-    
+    #there's gotta be a better way to check collision
+    def checkCollision(self, snake):
+        snek = pg.Rect(snake.hPos[0] * 50, snake.hPos[1] * 50, 50, 50)
+        return self.apple_but_rect.colliderect(snek)
     @classmethod 
     def appleBlit(cls, screen):
         for individuApple in Apple.appleList:
@@ -86,6 +89,10 @@ class Snake:
             self.direction = pg.Vector3(1,0,0)
         else:
             pass # I think this is needed... try check
+    def printSnake(self):
+        snek = pg.Rect(self.hPos[0] * 50, self.hPos[1] * 50, 50, 50)
+        pg.draw.rect(screen, color=('Green'), rect=snek)
+
     def __str__(self):
        
         retStr = ""
@@ -130,6 +137,7 @@ def snakeGame(menu = Menu(screenInp=screen), snake=Snake(SnakeMat())): ## this i
     run = True
     while run:
         screen.fill('black')
+        mainSnake.printSnake()
         ## and Corbeau's theme slaps too zawg.
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -149,8 +157,7 @@ def snakeGame(menu = Menu(screenInp=screen), snake=Snake(SnakeMat())): ## this i
         #    Apple()
         #    apple_exist = True 
         Apple.appleBlit(screen)
-       
-        
+
         
         pg.display.flip()
         clock.tick(framerate)
