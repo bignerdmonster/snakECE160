@@ -45,7 +45,7 @@ class GameObject:
         self.pos.append(0) if len(self.pos) == 2 else 1 ## 3d coordinates, from base.
         self.sMat = sMat
     def render(self, screenV=screen):
-        pass
+        pass # comment for unrelated commit test
 
 
 
