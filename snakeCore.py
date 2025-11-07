@@ -1,5 +1,5 @@
 import pygame as pg
-from menu import Menu
+from menu import Menu, PauseMenu
 import random
 pg.init() #strict typing
 SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
@@ -114,12 +114,20 @@ class Snake(GameObject):
             
     def steer(self, keys):
         if keys[self.up]:
+            if self.direction.y == 1:
+                return # prevent the 180
             self.direction = pg.Vector3(0,-1,0)
         elif keys[self.down]:
+            if self.direction.y == -1:
+                return
             self.direction = pg.Vector3(0,1,0)
         elif keys[self.left]:
+            if self.direction.x == 1:
+                return
             self.direction = pg.Vector3(-1,0,0)
         elif keys[self.right]:
+            if self.direction.x == -1:
+                return
             self.direction = pg.Vector3(1,0,0)
         if keys[self.interact]:
             self.len += 1 # test snake increase, this works weirdly due to inputs being processed 24/7, but logic performing once per second
@@ -162,7 +170,7 @@ pg.time.set_timer(SNAKE_EVENT, 67) # every 1 s, the snake allegedly moves.
 
 print("Starting")
 framerate = 60
-def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
+def snakeGame(snake): ## this is the actual main game loop function!! yay
     run = True
     while run:
         screen.fill('black')
@@ -187,7 +195,7 @@ def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
         GameObject.Render(screen)
         pg.display.flip()
         clock.tick(framerate)
-    menu.notstop = True
+    
 
 
 
@@ -200,9 +208,13 @@ if __name__ == "__main__":
     clock = pg.time.Clock()
 
     framerate = 60
-    mainMenu = Menu(screenInp=screen, start_game=None, clocked=clock,win_h=SCREEN_HEIGHT,win_w=SCREEN_WIDTH) #testing w/ start-game = none
+    pauseMenu = PauseMenu(screen, clock, SCREEN_WIDTH, SCREEN_HEIGHT)
+
+    Menu(screenInp=screen, start_game=None, clocked=clock,win_h=SCREEN_HEIGHT,win_w=SCREEN_WIDTH).run()  #moving menu to up here, allows for better menuisms
+
+     # too yorked.
     while True:
-        mainMenu.run()
-        snakeGame(mainMenu,mainSnake)
+        snakeGame(mainSnake)
+        pauseMenu.display()
 else:
     print("snakeCore imported, or YOU SHOULD RUN THIS WITH python3 snakeCore.py")

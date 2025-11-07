@@ -20,13 +20,13 @@ class Button:
         self.rect = pg.Rect(0, 0, *size)
         self.rect.center = center
 
-    def draw(self, surf, font=None):
+    def draw(self, surf, font='papyrus'):
         if not pg.font.get_init():
             pg.font.init()
-        font = font or pg.font.SysFont(None, 36)
+        self.font = pg.font.SysFont(font, 36)
         hovering = self.rect.collidepoint(pg.mouse.get_pos())
         pg.draw.rect(surf, ACCENT_H if hovering else ACCENT, self.rect, border_radius=14)
-        label = font.render(self.txt, True, (255, 255, 255))
+        label = self.font.render(self.txt, True, (255, 255, 255))
         surf.blit(label, label.get_rect(center=self.rect.center))
         return hovering
 
@@ -111,3 +111,25 @@ class Menu:
             self.clock.tick(15)
         
         
+class PauseMenu:
+    run = False
+    def __init__(self, screenInp, clocked, win_w, win_h):
+        self.screen = screenInp
+        self.clock = clocked
+        self.win_w, self.win_h = win_w, win_h
+    
+    def display(self):
+        print("I ran first")
+        while PauseMenu.run:
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    exit(0)
+                elif event.type == pg.KEYDOWN:
+                    if event.key == pg.K_ESCAPE:
+                        PauseMenu.run = False
+            self.screen.fill((0,0,0))
+            self.screen.blit((pg.font.SysFont("Papyrus", 96)).render("PAUSED", True, (255,0,0)))
+            pg.display.flip()
+            self.clock.tick(15)
+        print("I ran")
