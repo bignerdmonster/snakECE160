@@ -30,13 +30,12 @@ class SnakeMat:
 print("line 29")
 class GameObject:
     objList = []
-    def __init__(self, pos = None, sMat = SnakeMat()): ## how it feels to lazily assign pos to an actual strict value. idc.
-        print("I'm being created!", type(self))
+    def __init__(self, pos, sMat): ## how it feels to lazily assign pos to an actual strict value. idc.
         GameObject.objList.append(self)
         self.pos = pos if pos else [0, 0]
         self.pos.append(0) if len(self.pos) == 2 else 1 ## 3d coordinates, from base.
         self.sMat = sMat
-        self.color = 'pink'
+        self.color = 'magenta' ## if you see this, something has gone very wrong.
         self.rect = [CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT]
     def render(self, screenV=screen):
         #print(self.color)
@@ -45,8 +44,6 @@ class GameObject:
     def collide(self, snake):
         quit()
 
-    def __del__(self):
-        GameObject.objList.remove(self)
 
     @classmethod
     def Render(cls, screenV=screen):
@@ -69,7 +66,7 @@ class Snake(GameObject):
         cls._instance = super().__new__(cls)
         return cls._instance
         # ai code over
-    def __init__(self, sMat = SnakeMat(), **args): #PLEASE pass custompos as a 3 val array if it is being used.
+    def __init__(self, sMat, **args): #PLEASE pass custompos as a 3 val array if it is being used.
         initpos = sMat.center[:] if (not ('startPos' in args)) else args['startPos']
         super().__init__(initpos, sMat) #sets self.pos, self.sMat,
         self.color = 'green'
@@ -99,7 +96,7 @@ class Snake(GameObject):
                 ((self.pos[1] + int(self.direction.y)) % self.sMat.rows), 
                 (self.pos[2] + int(self.direction.z))]
     
-    def collide(self, obj=GameObject()):
+    def collide(self, obj):
         #print(type(self),type(obj))
         if self.futurePos() == obj.pos:
             obj.collide(self)
@@ -141,14 +138,14 @@ class Snake(GameObject):
         for row in tempMat:
             retStr += ' '.join([str(elem) for elem in row]) + "\n"
         return retStr
-    def render(self, screenV=screen):
+    def render(self, screenV):
         super().render(screenV)
         for segment in self.bPos[1:]:
             pg.draw.rect(screenV, 'yellow', [CELL_LENGTH*segment[0], CELL_HEIGHT*segment[1], CELL_LENGTH, CELL_HEIGHT])
         pass
 
 class Apple(GameObject):
-    def __init__(self,pos=[0,0],sMat=SnakeMat()):
+    def __init__(self,pos,sMat):
         super().__init__(pos,sMat)
         self.color = (255,0,0)
     
@@ -165,7 +162,7 @@ pg.time.set_timer(SNAKE_EVENT, 1000) # every 1 s, the snake allegedly moves.
 
 print("Starting")
 framerate = 15
-def snakeGame(menu = Menu(screenInp=screen), snake=Snake(SnakeMat())): ## this is the actual main game loop function!! yay
+def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
     run = True
     while run:
         screen.fill('black')
