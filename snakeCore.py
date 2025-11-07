@@ -1,25 +1,15 @@
 import pygame as pg
 from menu import Menu
 import random
+pg.init() #strict typing
+SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
+COLUMN_COUNT, ROW_COUNT = 151, 111 #disgustingly out of fn. scope
+#logic to figure out square height & stuff
+CELL_LENGTH = SCREEN_WIDTH // COLUMN_COUNT
+CELL_HEIGHT = SCREEN_HEIGHT // ROW_COUNT ## #honestly who cares if they're square.
+CELL_DIMS = (CELL_LENGTH, CELL_HEIGHT) ## Too lazy to implement properly
+screen = pg.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), pg.SCALED, vsync=1) # i mean, i'll leave function references to this variable, but really it can just be constant.
 
-#spawns apples randomly
-class Apple:
-    appleList = []
-    def __init__(self):
-        Apple.appleList.append(self)
-        self.apple_size = 67
-        self.x = random.randrange(0,980)
-        self.y = random.randrange(0,620)
-        self.color = (255,0,0)
-        self.apple_but_rect = pg.Rect(self.x, self.y, self.apple_size, self.apple_size)
-    
-    def spawn(self, screen):
-        pg.draw.rect(screen, self.color, self.apple_but_rect)
-    
-    @classmethod 
-    def appleBlit(cls, screen):
-        for individuApple in Apple.appleList:
-            individuApple.spawn(screen)
 
 
 
@@ -36,45 +26,92 @@ class SnakeMat:
             retStr += ' '.join([str(elem) for elem in row]) + "\n"
         return retStr.strip()
     # i am dizzy. i will rest now. (ai told me to rest, i am "OBEYING" LAUGHING MY ASS OFF WTF) ### jacinthe's battle theme is REALLY good. 
-    ## ok lets get real. Do I A: convert snakemat to pygame objects in the main game loop, or B: convert to printables et all in a fn., which is then called from the gameloop? I think the latter. also this theme SLAPS
-    #def pgRender(self):
-        ## ok so we want each value of the snakemat to be converted, but only valid ones. 
-        
 
-class Snake:
-    soleSnake = ["how recursive do we have to get"]
-    def __init__(self, sMat = SnakeMat(), **args): #PLEASE pass custompos as a 3 val array if it is being used.
-        Snake.soleSnake[0]=self
-        #basically, what if... ehh. how to 
-        self.hPos = sMat.center[:] if (not ("startPos" in args.keys())) else args["startPos"] ## this is to create the POSSIBILITY of a third dimension
-        self.hPos.append(0) if len(self.hPos) == 2 else 1
-        self.pos = [self.hPos[:]] # what I want is for self.pos to work like this: first, it only has self.hPos (as that's the only position). Then, it has first the old self.hPos, then a new self.hPos incremented by the motion vector, so that the snake moves... hm 
-       
-        self.direction = pg.Vector3(0,0,0) ##again, third dimension! because I want it. don't touch it tho.
-        # ok how do I do this efficiently? 
-        ## args for controls will be in the form controls = {'up': pg.K_UP, 'down': pg.K_DOWN, etc etc}
-        if 'controls' in args.keys():
+
+class GameObject:
+    objList = []
+    def __init__(self, pos, sMat): ## how it feels to lazily assign pos to an actual strict value. idc.
+        GameObject.objList.append(self) # keep track.
+        self.pos = pos if pos else [0, 0] #yeah
+        self.pos.append(0) if len(self.pos) == 2 else 1 ## 3d coordinates, from base.
+        self.sMat = sMat # snake mat! 
+        self.color = 'magenta' ## if you see this, something has gone very wrong.
+        self.rect = [CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT]
+    def render(self, screenV=screen):
+        #print(self.color)
+        pg.draw.rect(screenV, self.color, self.rect)
+    
+    def collide(self, snake):
+        quit()
+
+
+    @classmethod
+    def Render(cls, screenV=screen):
+        for obj in cls.objList:
+            obj.render(screenV) #and we're back to the team flare noveau theme being so goated...
+    @classmethod
+    def Collide(cls, snake):
+        for obj in [x for x in cls.objList if x != snake]:
+            #print(type(obj), obj)
+            snake.collide(obj)
+
+
+
+
+class Snake(GameObject):
+    _instance = None ## ok frankly this was done by ai. I have YET to understand this chunk, but it will come soon.
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is not None:
+            cls._instance.__del__()  # Clean up old instance from GameObject.objList
+        cls._instance = super().__new__(cls)
+        return cls._instance
+        # ai code over
+    def __init__(self, sMat, **args): #PLEASE pass custompos as a 3 val array if it is being used.
+        initpos = sMat.center[:] if (not ('startPos' in args)) else args['startPos']
+        super().__init__(initpos, sMat) #sets self.pos, self.sMat,
+        self.color = 'green'
+        self.bPos = [self.pos[:]] # bPos is an array containing all the positions where snake segments are. bPos[0] will always be the head, and segments get older as you progress through the array. 0, 1 0, 2 1 0, etc.
+        self.direction = pg.Vector3(0,0,0) # three-dimensional movement possibilites
+
+        if 'controls' in args.keys(): # ALL OF THESE HAVE TO EXIST OR THE PROGRAM DIES.
             self.up = args['controls']['up'] 
             self.down = args['controls']['down']
             self.left = args['controls']['left']
             self.right = args['controls']['right']
-        else:
+            self.interact = args['controls']['interact']
+        else: #default case... jacinthe's theme slaps so hard.
             self.up = pg.K_w
             self.down = pg.K_s
             self.left = pg.K_a
             self.right = pg.K_d
-        # tfw the team flare noveau STOP MAKING SNAKE PUNS CLANKER sigh theme slaps so hard
+            self.interact = pg.K_e
+        
         self.sMat = sMat
-        sMat.mat[self.hPos[0]][self.hPos[1]] = 2 ## 2 is the snake's head. the AI is mimicking my style. this is black mirror to an extent which i find strange.
+        sMat.mat[self.pos[0]][self.pos[1]] = 2 ## 2 is the snake's head. the AI is mimicking my style. this is black mirror to an extent which i find strange.
         self.len = 1  # length of snake; used to determine when to pop tail
-        # is that it?
+
+    def futurePos(self):
+        ##  basically, this returns coordinates. It's the movement function, but doesn't update the movement 
+        return [((self.pos[0] + int(self.direction.x)) % self.sMat.cols), 
+                ((self.pos[1] + int(self.direction.y)) % self.sMat.rows), 
+                (self.pos[2] + int(self.direction.z))]
+    
+    def collide(self, obj):
+        #print(type(self),type(obj))
+        if self.futurePos() == obj.pos:
+            obj.collide(self)
+        elif self.futurePos() in self.bPos:
+            ## snake hits tail... just going to ignore for now
+            pass
+
     def move(self):
-        self.hPos[0] = (self.hPos[0] + int(self.direction.x)) % self.sMat.cols; self.hPos[1] = (self.hPos[1] + int(self.direction.y)) % self.sMat.rows; self.hPos[2] += int(self.direction.z) # increment head position by direction vector
-        # modulo to keep the snake from throwing index errors
-        self.pos.insert(0, self.hPos[:]) ## insert the new head position at the start of the list, allowing for head to remain constant... 0, 1 0, 2 1 0, etc
-        if len(self.pos) > self.len: # you can undertand this one
-            self.pos.pop() ## remove tail 
-            # simple enough!
+        self.pos = self.futurePos()[:]
+        self.rect = [CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT] #rect
+        
+        self.bPos.insert(0, self.pos[:]) ## insert the new head position at the start of the list
+        if len(self.bPos) > self.len:
+            self.bPos.pop() ## remove tail if array is bigger than length
+            
     def steer(self, keys):
         if keys[self.up]:
             self.direction = pg.Vector3(0,-1,0)
@@ -84,13 +121,14 @@ class Snake:
             self.direction = pg.Vector3(-1,0,0)
         elif keys[self.right]:
             self.direction = pg.Vector3(1,0,0)
+        if keys[self.interact]:
+            self.len += 1 # test snake increase, this works weirdly due to inputs being processed 24/7, but logic performing once per second
         else:
             pass # I think this is needed... try check
     def __str__(self):
-       
         retStr = ""
         tempMat = [[0 for place in range(self.sMat.cols)] for row in range(self.sMat.rows)]
-        for i, segment in enumerate(self.pos):
+        for i, segment in enumerate(self.bPos):
             print(segment)
             if i == 0:
                 tempMat[segment[1]][segment[0]] = 2 # head
@@ -100,58 +138,53 @@ class Snake:
         for row in tempMat:
             retStr += ' '.join([str(elem) for elem in row]) + "\n"
         return retStr
+    def render(self, screenV):
+        super().render(screenV)
+        for segment in self.bPos[1:]:
+            pg.draw.rect(screenV, 'yellow', [CELL_LENGTH*segment[0], CELL_HEIGHT*segment[1], CELL_LENGTH, CELL_HEIGHT])
+        pass
+
+class Apple(GameObject):
+    def __init__(self,pos,sMat):
+        super().__init__(pos,sMat)
+        self.color = (255,0,0)
+    
+
+    def collide(self, snake):
+        snake.len += 1
+        GameObject.objList.remove(self)
+    
+print("line 161")
 
 
-
-#print(snakeMat) -- i could make this a class... ehhhhh 
-            
-## ok how to snake it --
-### what we're gonna do is define the surface as a like 15x10 grid of things
-### then have the player start at the center of it, and go... right??? ok 
-### so like lets do that first -- done as of 8:04 pm 10/29
-## OK
-### NOW WE MAKE CONTROLS
-#### so basically like i want these guys to have custom controls. -- done
-### now, i should really make the actual snake OR ANYTHING THAT WORKS. buuuuuuut
-### ok some psuedocode to figure out logic:
-
-## for the first stage, we just need to make basic snake. that means 4 cardinal directions,
-## and you shouldn't be able to like... go in the oppisite direction. but that has more logic to it
-### OH IS THIS IMPLEMENTED IN PYGAME ALREADY -- it IS 
-
-pg.init()
 SNAKE_EVENT = pg.USEREVENT + 1
-pg.time.set_timer(SNAKE_EVENT, 1000) # every 1 ms, the snake allegedly moves.
-screen = pg.display.set_mode((1080,720), pg.SCALED, vsync=1)
-apple = Apple()
-print("bkpoint")
-def snakeGame(menu = Menu(screenInp=screen), snake=Snake(SnakeMat())): ## this is the actual main game loop function!! yay
-    #apple_exist = False
+pg.time.set_timer(SNAKE_EVENT, 67) # every 1 s, the snake allegedly moves.
+
+print("Starting")
+framerate = 60
+def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
     run = True
     while run:
         screen.fill('black')
-        ## and Corbeau's theme slaps too zawg.
+        keysPressed = pg.key.get_pressed()
+
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
                 exit(0)
             if event.type == SNAKE_EVENT:
-                snake.move()
-                print(snake)
-        keysPressed = pg.key.get_pressed()
+                GameObject.Collide(snake) #check collision first
+                snake.move() #main logic, operating one time per second. right now just moving.
+                # print(snake) ho brah no need this no more...
+                if keysPressed[pg.K_RETURN]:
+                    #print(GameObject.objList)
+                    Apple([random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)],snake.sMat) # make apple.
+                    
         if keysPressed[pg.K_ESCAPE]:
             run=False
         snake.steer(keysPressed)
-        ##copilot my searest, why is this throwing an error?
-        # response: 
-        
-        #if not apple_exist:
-        #    Apple()
-        #    apple_exist = True 
-        Apple.appleBlit(screen)
-       
-        
-        
+
+        GameObject.Render(screen)
         pg.display.flip()
         clock.tick(framerate)
     menu.notstop = True
@@ -161,15 +194,15 @@ def snakeGame(menu = Menu(screenInp=screen), snake=Snake(SnakeMat())): ## this i
 
 if __name__ == "__main__":
 
-    mainMat = SnakeMat()
+    mainMat = SnakeMat(COLUMN_COUNT,ROW_COUNT)
     mainSnake = Snake(mainMat)
-    apple = Apple()
+    Apple([5,5], mainMat)
     clock = pg.time.Clock()
 
-    framerate = 15
-    mainMenu = Menu(screenInp=screen, start_game=None, clocked=clock) #testing w/ start-game = none
+    framerate = 60
+    mainMenu = Menu(screenInp=screen, start_game=None, clocked=clock,win_h=SCREEN_HEIGHT,win_w=SCREEN_WIDTH) #testing w/ start-game = none
     while True:
         mainMenu.run()
-        snakeGame(mainMenu)
+        snakeGame(mainMenu,mainSnake)
 else:
     print("snakeCore imported, or YOU SHOULD RUN THIS WITH python3 snakeCore.py")
