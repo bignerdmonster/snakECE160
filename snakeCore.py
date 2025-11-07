@@ -2,8 +2,8 @@ import pygame as pg
 from menu import Menu
 import random
 pg.init() #strict typing
-SCREEN_WIDTH, SCREEN_HEIGHT = 1080, 720
-COLUMN_COUNT, ROW_COUNT = 15, 11 #disgustingly out of fn. scope
+SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
+COLUMN_COUNT, ROW_COUNT = 151, 111 #disgustingly out of fn. scope
 #logic to figure out square height & stuff
 CELL_LENGTH = SCREEN_WIDTH // COLUMN_COUNT
 CELL_HEIGHT = SCREEN_HEIGHT // ROW_COUNT ## #honestly who cares if they're square.
@@ -27,14 +27,14 @@ class SnakeMat:
         return retStr.strip()
     # i am dizzy. i will rest now. (ai told me to rest, i am "OBEYING" LAUGHING MY ASS OFF WTF) ### jacinthe's battle theme is REALLY good. 
 
-print("line 29")
+
 class GameObject:
     objList = []
     def __init__(self, pos, sMat): ## how it feels to lazily assign pos to an actual strict value. idc.
-        GameObject.objList.append(self)
-        self.pos = pos if pos else [0, 0]
+        GameObject.objList.append(self) # keep track.
+        self.pos = pos if pos else [0, 0] #yeah
         self.pos.append(0) if len(self.pos) == 2 else 1 ## 3d coordinates, from base.
-        self.sMat = sMat
+        self.sMat = sMat # snake mat! 
         self.color = 'magenta' ## if you see this, something has gone very wrong.
         self.rect = [CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT]
     def render(self, screenV=screen):
@@ -158,10 +158,10 @@ print("line 161")
 
 
 SNAKE_EVENT = pg.USEREVENT + 1
-pg.time.set_timer(SNAKE_EVENT, 1000) # every 1 s, the snake allegedly moves.
+pg.time.set_timer(SNAKE_EVENT, 67) # every 1 s, the snake allegedly moves.
 
 print("Starting")
-framerate = 15
+framerate = 60
 def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
     run = True
     while run:
@@ -175,10 +175,10 @@ def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
             if event.type == SNAKE_EVENT:
                 GameObject.Collide(snake) #check collision first
                 snake.move() #main logic, operating one time per second. right now just moving.
-                print(snake)
+                # print(snake) ho brah no need this no more...
                 if keysPressed[pg.K_RETURN]:
-                    print(GameObject.objList)
-                    Apple([random.randint(0,14),random.randint(0,10)],snake.sMat) # make apple.
+                    #print(GameObject.objList)
+                    Apple([random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)],snake.sMat) # make apple.
                     
         if keysPressed[pg.K_ESCAPE]:
             run=False
@@ -194,13 +194,13 @@ def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
 
 if __name__ == "__main__":
 
-    mainMat = SnakeMat()
+    mainMat = SnakeMat(COLUMN_COUNT,ROW_COUNT)
     mainSnake = Snake(mainMat)
     Apple([5,5], mainMat)
     clock = pg.time.Clock()
 
-    framerate = 15
-    mainMenu = Menu(screenInp=screen, start_game=None, clocked=clock) #testing w/ start-game = none
+    framerate = 60
+    mainMenu = Menu(screenInp=screen, start_game=None, clocked=clock,win_h=SCREEN_HEIGHT,win_w=SCREEN_WIDTH) #testing w/ start-game = none
     while True:
         mainMenu.run()
         snakeGame(mainMenu,mainSnake)
