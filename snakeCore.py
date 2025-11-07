@@ -27,9 +27,11 @@ class SnakeMat:
         return retStr.strip()
     # i am dizzy. i will rest now. (ai told me to rest, i am "OBEYING" LAUGHING MY ASS OFF WTF) ### jacinthe's battle theme is REALLY good. 
 
+print("line 29")
 class GameObject:
     objList = []
     def __init__(self, pos = None, sMat = SnakeMat()): ## how it feels to lazily assign pos to an actual strict value. idc.
+        print("I'm being created!", type(self))
         GameObject.objList.append(self)
         self.pos = pos if pos else [0, 0]
         self.pos.append(0) if len(self.pos) == 2 else 1 ## 3d coordinates, from base.
@@ -37,7 +39,12 @@ class GameObject:
         self.color = 'pink'
         self.rect = [CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT]
     def render(self, screenV=screen):
+        #print(self.color)
         pg.draw.rect(screenV, self.color, self.rect)
+    
+    def collide(self, snake):
+        quit()
+
     def __del__(self):
         GameObject.objList.remove(self)
 
@@ -45,11 +52,12 @@ class GameObject:
     def Render(cls, screenV=screen):
         for obj in cls.objList:
             obj.render(screenV) #and we're back to the team flare noveau theme being so goated...
+    @classmethod
+    def Collide(cls, snake):
+        for obj in [x for x in cls.objList if x != snake]:
+            #print(type(obj), obj)
+            snake.collide(obj)
 
-class Apple(GameObject):
-    def __init__(self,pos=[0,0],sMat=SnakeMat()):
-        super().__init__(pos,sMat)
-        self.color = (255,0,0)
 
 
 
@@ -60,7 +68,7 @@ class Snake(GameObject):
             cls._instance.__del__()  # Clean up old instance from GameObject.objList
         cls._instance = super().__new__(cls)
         return cls._instance
-        
+        # ai code over
     def __init__(self, sMat = SnakeMat(), **args): #PLEASE pass custompos as a 3 val array if it is being used.
         initpos = sMat.center[:] if (not ('startPos' in args)) else args['startPos']
         super().__init__(initpos, sMat) #sets self.pos, self.sMat,
@@ -84,15 +92,24 @@ class Snake(GameObject):
         self.sMat = sMat
         sMat.mat[self.pos[0]][self.pos[1]] = 2 ## 2 is the snake's head. the AI is mimicking my style. this is black mirror to an extent which i find strange.
         self.len = 1  # length of snake; used to determine when to pop tail
-        
+
+    def futurePos(self):
+        ##  basically, this returns coordinates. It's the movement function, but doesn't update the movement 
+        return [((self.pos[0] + int(self.direction.x)) % self.sMat.cols), 
+                ((self.pos[1] + int(self.direction.y)) % self.sMat.rows), 
+                (self.pos[2] + int(self.direction.z))]
+    
+    def collide(self, obj=GameObject()):
+        #print(type(self),type(obj))
+        if self.futurePos() == obj.pos:
+            obj.collide(self)
+        elif self.futurePos() in self.bPos:
+            ## snake hits tail... just going to ignore for now
+            pass
+
     def move(self):
-        self.pos[0] = (self.pos[0] + int(self.direction.x)) % self.sMat.cols
-        self.pos[1] = (self.pos[1] + int(self.direction.y)) % self.sMat.rows
-        self.pos[2] = (self.pos[2] + int(self.direction.z)) # %% self.sMat.z but we're not ready for that yet
-        ## these modulo are to prevent index errors
-        
-        # Update rectangle position
-        self.rect = [CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT]
+        self.pos = self.futurePos()[:]
+        self.rect = [CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT] #rect
         
         self.bPos.insert(0, self.pos[:]) ## insert the new head position at the start of the list
         if len(self.bPos) > self.len:
@@ -130,44 +147,42 @@ class Snake(GameObject):
             pg.draw.rect(screenV, 'yellow', [CELL_LENGTH*segment[0], CELL_HEIGHT*segment[1], CELL_LENGTH, CELL_HEIGHT])
         pass
 
+class Apple(GameObject):
+    def __init__(self,pos=[0,0],sMat=SnakeMat()):
+        super().__init__(pos,sMat)
+        self.color = (255,0,0)
+    
 
-
-#print(snakeMat) -- i could make this a class... ehhhhh 
-            
-## ok how to snake it --
-### what we're gonna do is define the surface as a like 15x10 grid of things
-### then have the player start at the center of it, and go... right??? ok 
-### so like lets do that first -- done as of 8:04 pm 10/29
-## OK
-### NOW WE MAKE CONTROLS
-#### so basically like i want these guys to have custom controls. -- done
-### now, i should really make the actual snake OR ANYTHING THAT WORKS. buuuuuuut
-### ok some psuedocode to figure out logic:
-
-## for the first stage, we just need to make basic snake. that means 4 cardinal directions,
-## and you shouldn't be able to like... go in the oppisite direction. but that has more logic to it
-### OH IS THIS IMPLEMENTED IN PYGAME ALREADY -- it IS 
+    def collide(self, snake):
+        snake.len += 1
+        GameObject.objList.remove(self)
+    
+print("line 161")
 
 
 SNAKE_EVENT = pg.USEREVENT + 1
-pg.time.set_timer(SNAKE_EVENT, 650) # every 1 s, the snake allegedly moves.
+pg.time.set_timer(SNAKE_EVENT, 1000) # every 1 s, the snake allegedly moves.
 
 print("Starting")
 framerate = 15
 def snakeGame(menu = Menu(screenInp=screen), snake=Snake(SnakeMat())): ## this is the actual main game loop function!! yay
-    
     run = True
     while run:
         screen.fill('black')
-        ## and Corbeau's theme slaps too zawg.
+        keysPressed = pg.key.get_pressed()
+
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
                 exit(0)
             if event.type == SNAKE_EVENT:
+                GameObject.Collide(snake) #check collision first
                 snake.move() #main logic, operating one time per second. right now just moving.
                 print(snake)
-        keysPressed = pg.key.get_pressed()
+                if keysPressed[pg.K_RETURN]:
+                    print(GameObject.objList)
+                    Apple([random.randint(0,14),random.randint(0,10)],snake.sMat) # make apple.
+                    
         if keysPressed[pg.K_ESCAPE]:
             run=False
         snake.steer(keysPressed)
@@ -184,7 +199,7 @@ if __name__ == "__main__":
 
     mainMat = SnakeMat()
     mainSnake = Snake(mainMat)
-    apple = Apple()
+    Apple([5,5], mainMat)
     clock = pg.time.Clock()
 
     framerate = 15
