@@ -173,7 +173,7 @@ class musicBox():
         #I need this to be translucent lmao
         surf = pg.Surface((150, 150), pg.SRCALPHA)
         surf.fill(self.color)
-        screenV.blit(surf, self.mB.topleft)
+        screenV.blit(surf, self.mB)
 
         # timer, if timer hit 0 they die idk
         font = pg.font.Font(None, 36)
@@ -184,7 +184,7 @@ class musicBox():
         mouse_x, mouse_y = pg.mouse.get_pos()
         mouse_pressed = pg.mouse.get_pressed()
         if self.mB.collidepoint(mouse_x, mouse_y) and mouse_pressed[0]:
-            self.holding()  # Wind up the music box
+            self.holding() #adds 2 secs to da timer
 
 class Apple(GameObject):
     def __init__(self,pos,sMat):
