@@ -144,16 +144,57 @@ class Snake(GameObject):
             pg.draw.rect(screenV, 'yellow', [CELL_LENGTH*segment[0], CELL_HEIGHT*segment[1], CELL_LENGTH, CELL_HEIGHT])
         pass
 
+#funny fnaf music box
+class musicBox():
+    def __init__(self, time = 450):
+        self.maxtime = time
+        self.time = time
+        self.mB = pg.Rect(SCREEN_WIDTH - 500, SCREEN_HEIGHT -500, 150, 150)
+        self.color = (0, 0, 255, 76)
+        self.last_tick = pg.time.get_ticks()
+    def explode(self):
+        return self.time < 0
+    def holding(self):
+        # uh it ticked way too fast before so I'm using get_ticks to track time
+        current_time = pg.time.get_ticks()
+        if self.time < self.maxtime:
+            if current_time - self.last_tick >= 100:
+                self.time += 60
+                self.last_tick = current_time
+            if self.time > self.maxtime:
+                self.time -= abs(self.time - self.maxtime)
+    def tick(self):
+        #uh it ticked way too fast before so I'm using get_ticks to track time
+        current_time = pg.time.get_ticks()
+        if current_time - self.last_tick >= 1000:
+            self.time -= 60
+            self.last_tick = current_time
+    def render(self, screenV = screen):
+        #I need this to be translucent lmao
+        surf = pg.Surface((150, 150), pg.SRCALPHA)
+        surf.fill(self.color)
+        screenV.blit(surf, self.mB.topleft)
+
+        # timer, if timer hit 0 they die idk
+        font = pg.font.Font(None, 36)
+        text = font.render(f"Time: {self.time // 60}", True, (255, 255, 255))
+        screenV.blit(text, (self.mB.x + 10, self.mB.y + 10))
+
+        #handles if they're winding it
+        mouse_x, mouse_y = pg.mouse.get_pos()
+        mouse_pressed = pg.mouse.get_pressed()
+        if self.mB.collidepoint(mouse_x, mouse_y) and mouse_pressed[0]:
+            self.holding()  # Wind up the music box
+
 class Apple(GameObject):
     def __init__(self,pos,sMat):
         super().__init__(pos,sMat)
         self.color = (255,0,0)
-    
 
     def collide(self, snake):
         snake.len += 1
         GameObject.objList.remove(self)
-    
+
 print("line 161")
 
 
@@ -175,16 +216,21 @@ def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
             if event.type == SNAKE_EVENT:
                 GameObject.Collide(snake) #check collision first
                 snake.move() #main logic, operating one time per second. right now just moving.
+                musicBox.tick()
                 # print(snake) ho brah no need this no more...
                 if keysPressed[pg.K_RETURN]:
                     #print(GameObject.objList)
                     Apple([random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)],snake.sMat) # make apple.
-                    
         if keysPressed[pg.K_ESCAPE]:
             run=False
         snake.steer(keysPressed)
-
+        if snake.pos[0] < 0 or snake.pos[0] >= snake.sMat.cols or snake.pos[1] < 0 or snake.pos[1] >= snake.sMat.rows:
+            screen.fill('yellow')
         GameObject.Render(screen)
+        #musicbox stuff
+        musicBox.render(screen)
+        if musicBox.explode():
+            run = False
         pg.display.flip()
         clock.tick(framerate)
     menu.notstop = True
@@ -198,6 +244,7 @@ if __name__ == "__main__":
     mainSnake = Snake(mainMat)
     Apple([5,5], mainMat)
     clock = pg.time.Clock()
+    musicBox = musicBox()
 
     framerate = 60
     mainMenu = Menu(screenInp=screen, start_game=None, clocked=clock,win_h=SCREEN_HEIGHT,win_w=SCREEN_WIDTH) #testing w/ start-game = none
