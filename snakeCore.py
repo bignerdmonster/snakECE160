@@ -1,4 +1,6 @@
 import pygame as pg
+from pygame.gfxdraw import rectangle
+
 from menu import Menu
 import random
 pg.init() #strict typing
@@ -149,7 +151,7 @@ class musicBox():
     def __init__(self, time = 450):
         self.maxtime = time
         self.time = time
-        self.mB = pg.Rect(SCREEN_WIDTH - 500, SCREEN_HEIGHT -500, 150, 150)
+        self.mB = pg.Rect(random.randint(200, SCREEN_WIDTH - 200), random.randint(200, SCREEN_HEIGHT - 200), 150, 150)
         self.color = (0, 0, 255, 76)
         self.last_tick = pg.time.get_ticks()
     def explode(self):
@@ -186,6 +188,22 @@ class musicBox():
         if self.mB.collidepoint(mouse_x, mouse_y) and mouse_pressed[0]:
             self.holding() #adds 2 secs to da timer
 
+class PopUps():
+    def __init__(self, pos):
+        self.pos = pos
+        self.color = (255,255,255, 67)
+        self.popup = pg.Rect(pos[0], pos[1], 400, 400)
+        self.clicked = False
+    def render(self):
+        pg.draw.rect(screen, self.color, self.popup)
+    def check(self):
+        mouse_x, mouse_y = pg.mouse.get_pos()
+        mouse_pressed = pg.mouse.get_pressed()
+        if self.popup.collidepoint(mouse_x, mouse_y) and mouse_pressed[0]:
+            self.popup = pg.Rect(random.randint(400, SCREEN_WIDTH - 400), random.randint(400, SCREEN_HEIGHT - 400), 400, 400)
+            return True
+        else:
+            return False
 class Apple(GameObject):
     def __init__(self,pos,sMat):
         super().__init__(pos,sMat)
@@ -203,12 +221,15 @@ pg.time.set_timer(SNAKE_EVENT, 67) # every 1 s, the snake allegedly moves.
 
 print("Starting")
 framerate = 60
+
 def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
     run = True
+    popup = PopUps([random.randint(0, SCREEN_WIDTH), random.randint(0, SCREEN_HEIGHT)])
     while run:
         screen.fill('black')
         keysPressed = pg.key.get_pressed()
-
+        if popup.check():
+            popup = PopUps([random.randint(0, SCREEN_WIDTH), random.randint(0, SCREEN_HEIGHT)])
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
@@ -229,6 +250,7 @@ def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
         GameObject.Render(screen)
         #musicbox stuff
         musicBox.render(screen)
+        popup.render()
         if musicBox.explode():
             run = False
         pg.display.flip()
