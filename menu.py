@@ -4,7 +4,7 @@
 import pygame as pg
 
 
-WIN_W, WIN_H = 1080, 720
+
 
 
 BG = (18, 18, 20)
@@ -37,36 +37,37 @@ class Button:
         )
 
 class Menu:
-    def __init__(self, screenInp=None, start_game=None, title="Stake (get it like start and snake lol)",clocked=pg.time.Clock()):
+    def __init__(self, screenInp=None, start_game=None, title="Stake (get it like start and snake lol)",clocked=pg.time.Clock(),win_w=1080, win_h=720):
         self.notstop = True
-        self.screen = screenInp or pg.display.set_mode((1080, 720), pg.SCALED, vsync=1)
+        self.screen = screenInp or pg.display.set_mode((win_w, win_h), pg.SCALED, vsync=1)
         pg.display.set_caption(title)
         self.clock = clocked
-
+        self.win_w = win_w
+        self.win_h = win_h
         self.title_font = pg.font.SysFont(None, 96)
         self.small_font = pg.font.SysFont(None, 28)
 
         #btns
-        self.play_btn = Button("Play (Enter)", (WIN_W//2, WIN_H//2 + 20))
-        self.howto_btn = Button("How to Play (H)", (WIN_W//2, WIN_H//2 + 110))
-        self.quit_btn = Button("Quit (Esc)", (WIN_W//2, WIN_H//2 + 200))
+        self.play_btn = Button("Play (Enter)", (self.win_w//2, self.win_h//2 + 20))
+        self.howto_btn = Button("How to Play (H)", (self.win_w//2, self.win_h//2 + 110))
+        self.quit_btn = Button("Quit (Esc)", (self.win_w//2, self.win_h//2 + 200))
         self.show_help = False
         self.lines = [
             "Use Arrow Keys or WASD to move.",
             "",
             "Press Esc to switch between this screen and the menu."
         ]
-        self.start_game = start_game
+        
 
     def _draw_help(self):
         howPlay = self.title_font.render("How to Play", True, TEXT)
-        self.screen.blit(howPlay, howPlay.get_rect(center=(WIN_W//2, 140)))
+        self.screen.blit(howPlay, howPlay.get_rect(center=(self.win_w//2, 140)))
         for line in self.lines:
             label = self.small_font.render(line, True, TEXT)
-            self.screen.blit(label, label.get_rect(center=(WIN_W//2, 240 + self.lines.index(line) * 40)))
+            self.screen.blit(label, label.get_rect(center=(self.win_w//2, 240 + self.lines.index(line) * 40)))
     def _draw_main(self):
         title = self.title_font.render("snake", True, TEXT)
-        self.screen.blit(title, title.get_rect(center=(WIN_W//2, WIN_H//2 - 120)))
+        self.screen.blit(title, title.get_rect(center=(self.win_w//2, self.win_h//2 - 120)))
 
 
         self.play_btn.draw(self.screen)
