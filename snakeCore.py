@@ -184,6 +184,20 @@ def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
             run=False
         snake.steer(keysPressed)
 
+        if keysPressed[pg.K_g]:
+            GameOverScreen(screen, clock, win_h=SCREEN_HEIGHT, win_w=SCREEN_WIDTH).run()
+            snake.pos = [COLUMN_COUNT // 2, ROW_COUNT // 2, 0]
+            snake.rect[0] = snake.pos[0] * CELL_LENGTH
+            snake.rect[1] = snake.pos[1] * CELL_HEIGHT
+
+            snake.bPos.clear()
+            snake.len = 1
+            snake.direction = pg.Vector3(1, 0, 0)
+            #Apples.reset() => to be made later on
+
+            Apple([random.randint(0, COLUMN_COUNT-1),random.randint(0, ROW_COUNT-1)], snake.sMat)
+
+        
         GameObject.Render(screen)
         pg.display.flip()
         clock.tick(framerate)
