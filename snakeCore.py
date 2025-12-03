@@ -3,8 +3,8 @@ import random, os, sys
 from menu import Menu
 
 pg.init() #strict typing
-SCREEN_WIDTH, SCREEN_HEIGHT = 1080, 720
-COLUMN_COUNT, ROW_COUNT = 9, 5 ##d isgustingly out of fn. scope
+SCREEN_WIDTH, SCREEN_HEIGHT = 720, 720
+COLUMN_COUNT, ROW_COUNT = 41, 41 ##d isgustingly out of fn. scope
 #logic to figure out square height & stuff
 CELL_LENGTH = SCREEN_WIDTH // COLUMN_COUNT
 CELL_HEIGHT = SCREEN_HEIGHT // ROW_COUNT ## #honestly who cares if they're square.
@@ -192,22 +192,23 @@ class musicBox():
         if self.mB.collidepoint(mouse_x, mouse_y) and mouse_pressed[0]:
             self.holding() #adds 2 secs to da timer
 
-class PopUps():
-    def __init__(self, pos):
+class PopUps(GameObject):
+    def __init__(self, pos=[random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)]):
+        super().__init__(pos, mainMat)
         self.pos = pos
-        self.color = (255,255,255, 67)
-        self.popup = pg.Rect(pos[0], pos[1], 400, 400)
+        self.color = (255,255,255, 0.67)
+        self.rect[2] *= 4 # gross, but nessecary
+        self.rect[3] *= 4
+        self.collideRect = pg.Rect(self.rect[0],self.rect[1],self.rect[2],self.rect[3])
         self.clicked = False
-    def render(self):
-        pg.draw.rect(screen, self.color, self.popup)
-    def check(self):
-        mouse_x, mouse_y = pg.mouse.get_pos()
-        mouse_pressed = pg.mouse.get_pressed()
-        if self.popup.collidepoint(mouse_x, mouse_y) and mouse_pressed[0]:
-            self.popup = pg.Rect(random.randint(400, SCREEN_WIDTH - 400), random.randint(400, SCREEN_HEIGHT - 400), 400, 400)
-            return True
-        else:
-            return False
+
+
+    def render(self, screenV=screen):
+        if self.collideRect.collidepoint(pg.mouse.get_pos()) and (pg.mouse.get_pressed())[0]:
+            GameObject.objList.remove(self)
+            print("bam")
+            new = PopUps()
+        super().render(screenV)
         
 
 class Apple(GameObject):
@@ -218,7 +219,7 @@ class Apple(GameObject):
     def collide(self, snake):
         snake.len += 1
         GameObject.objList.remove(self)
-        Apple([random.randint(0, COLUMN_COUNT),random.randint(0,ROW_COUNT)], mainMat)
+        Apple([random.randint(0, COLUMN_COUNT),random.randint(0,ROW_COUNT)], self.sMat)
 
 print("line 161")
 
@@ -231,12 +232,11 @@ framerate = 60
 
 def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
     run = True
-    #popup = PopUps([random.randint(0, SCREEN_WIDTH), random.randint(0, SCREEN_HEIGHT)])
+    popup = PopUps()
     while run:
         screen.fill('black')
         keysPressed = pg.key.get_pressed()
-        """if popup.check():
-            popup = PopUps([random.randint(0, SCREEN_WIDTH), random.randint(0, SCREEN_HEIGHT)])"""
+
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
@@ -252,13 +252,11 @@ def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
         if keysPressed[pg.K_ESCAPE]:
             run = False
             nextMenu = 1 # 1 for Pause menu
-        elif keysPressed[pg.K_v]:
-            print(0)
-            os.execv(sys.argv[0])
         snake.steer(keysPressed)
         if snake.pos[0] < 0 or snake.pos[0] >= snake.sMat.cols or snake.pos[1] < 0 or snake.pos[1] >= snake.sMat.rows:
             screen.fill('yellow') ## this also shouldnt come up
         GameObject.Render(screen) # to be clear, renders all game objects.
+
         #musicbox stuff
         """musicBox.render(screen)
         popup.render()
