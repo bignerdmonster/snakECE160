@@ -32,7 +32,10 @@ class SnakeMat:
 class GameObject:
     objList = []
     def __init__(self, pos, sMat): ## how it feels to lazily assign pos to an actual strict value. idc.
-        GameObject.objList.append(self) # keep track.
+        if type(self) != PopUps:
+            GameObject.objList.insert(0, self)
+        else:
+            GameObject.objList.append(self)
         self.pos = pos if pos else [0, 0] #yeah
         self.pos.append(0) if len(self.pos) == 2 else 1 ## 3d coordinates, from base.
         self.sMat = sMat # snake mat! 
@@ -44,7 +47,7 @@ class GameObject:
     
     def collide(self, snake):
         print(self.__class__, "collided with snake!")
-
+    
 
     @classmethod
     def Render(cls, screenV=screen):
@@ -55,7 +58,10 @@ class GameObject:
         for obj in [x for x in cls.objList if x != snake]:
             #print(type(obj), obj)
             snake.collide(obj)
-
+    @classmethod
+    def Reset(cls): ## works for each class extends GameObject (ex. Snake, Apple, PopUps, )
+        for i in [x for x in GameObject.objList if type(x)==cls]:
+            GameObject.objList.remove(i)
 
 
 
@@ -114,7 +120,7 @@ class Snake(GameObject):
             self.bPos.pop() ## remove tail if array is bigger than length
         
         if self.specialFlags.get("debugPrint", False): # we can actaully adapt this system for like a boost or whatever.
-            print(GameObject.objList) 
+            Apple.Reset() 
             self.specialFlags["debugPrint"] = False # since inputs are processed 24/7, this allows a certain action to be queued, then happen when the snake moves. Works well!
             
     def steer(self, keys):
@@ -219,6 +225,7 @@ class Apple(GameObject):
         snake.len += 1
         GameObject.objList.remove(self)
         Apple([random.randint(0, COLUMN_COUNT),random.randint(0,ROW_COUNT)], self.sMat)
+
 
 print("line 161")
 
