@@ -1,5 +1,6 @@
 import pygame as pg
 from menu import Menu
+from pause import GameOverScreen
 import random
 pg.init() #strict typing
 SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
@@ -165,7 +166,9 @@ framerate = 60
 def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
     run = True
     while run:
-        screen.fill('black')
+        image = pg.transform.scale(pg.image.load("images/bg.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+        screen.blit(image, (0, 0))
+        
         keysPressed = pg.key.get_pressed()
 
         for event in pg.event.get():
@@ -183,6 +186,13 @@ def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
         if keysPressed[pg.K_ESCAPE]:
             run=False
         snake.steer(keysPressed)
+
+        if keysPressed[pg.K_g]:
+            run = False
+            GameOverScreen(screen, clock, win_h=SCREEN_HEIGHT, win_w=SCREEN_WIDTH).run()
+
+            snake.pos = [1, SCREEN_HEIGHT/10, SCREEN_WIDTH/10]
+            snake.len = 0
 
         GameObject.Render(screen)
         pg.display.flip()
