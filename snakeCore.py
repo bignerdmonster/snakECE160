@@ -1,5 +1,4 @@
 import pygame as pg
-from pygame.gfxdraw import rectangle
 
 from menu import Menu
 import random
@@ -37,14 +36,14 @@ class GameObject:
         self.pos = pos if pos else [0, 0] #yeah
         self.pos.append(0) if len(self.pos) == 2 else 1 ## 3d coordinates, from base.
         self.sMat = sMat # snake mat! 
-        self.color = 'magenta' ## if you see this, something has gone very wrong.
+        self.color = 'magenta' #if anything is magenta colored, that means it has been setup invalidly. warning color.
         self.rect = [CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT]
     def render(self, screenV=screen):
         #print(self.color)
         pg.draw.rect(screenV, self.color, self.rect)
     
     def collide(self, snake):
-        quit()
+        print(self.__class__, "collided with snake!")
 
 
     @classmethod
@@ -73,7 +72,8 @@ class Snake(GameObject):
         super().__init__(initpos, sMat) #sets self.pos, self.sMat,
         self.color = 'green'
         self.bPos = [self.pos[:]] # bPos is an array containing all the positions where snake segments are. bPos[0] will always be the head, and segments get older as you progress through the array. 0, 1 0, 2 1 0, etc.
-        self.direction = pg.Vector3(0,0,0) # three-dimensional movement possibilites
+        self.direction = pg.Vector3(1,0,0) # three-dimensional movement possibilites. also start by moving right to avoid self collision at beginning
+        self.specialFlags = {} # for custom controls-ish
 
         if 'controls' in args.keys(): # ALL OF THESE HAVE TO EXIST OR THE PROGRAM DIES.
             self.up = args['controls']['up'] 
@@ -103,28 +103,31 @@ class Snake(GameObject):
         if self.futurePos() == obj.pos:
             obj.collide(self)
         elif self.futurePos() in self.bPos:
-            ## snake hits tail... just going to ignore for now
+            print("yo this should probably end the game")
             pass
 
     def move(self):
         self.pos = self.futurePos()[:]
         self.rect = [CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT] #rect
-        
         self.bPos.insert(0, self.pos[:]) ## insert the new head position at the start of the list
         if len(self.bPos) > self.len:
             self.bPos.pop() ## remove tail if array is bigger than length
+        
+        if self.specialFlags.get("debugPrint", False): # we can actaully adapt this system for like a boost or whatever.
+            print(self.bPos) 
+            self.specialFlags["debugPrint"] = False # since inputs are processed 24/7, this allows a certain action to be queued, then happen when the snake moves. Works well!
             
     def steer(self, keys):
         if keys[self.up]:
-            self.direction = pg.Vector3(0,-1,0)
+            self.direction = pg.Vector3(0,-1,0) if self.direction.y != 1 else self.direction
         elif keys[self.down]:
-            self.direction = pg.Vector3(0,1,0)
+            self.direction = pg.Vector3(0,1,0) if self.direction.y != -1 else self.direction
         elif keys[self.left]:
-            self.direction = pg.Vector3(-1,0,0)
+            self.direction = pg.Vector3(-1,0,0) if self.direction.x != 1 else self.direction
         elif keys[self.right]:
-            self.direction = pg.Vector3(1,0,0)
+            self.direction = pg.Vector3(1,0,0) if self.direction.x != -1 else self.direction
         if keys[self.interact]:
-            self.len += 1 # test snake increase, this works weirdly due to inputs being processed 24/7, but logic performing once per second
+            self.specialFlags["debugPrint"] = True # removed length increase cuz jank, did i mess up array?
         else:
             pass # I think this is needed... try check
     def __str__(self):
@@ -142,6 +145,7 @@ class Snake(GameObject):
         return retStr
     def render(self, screenV):
         super().render(screenV)
+
         for segment in self.bPos[1:]:
             pg.draw.rect(screenV, 'yellow', [CELL_LENGTH*segment[0], CELL_HEIGHT*segment[1], CELL_LENGTH, CELL_HEIGHT])
         pass
@@ -204,6 +208,8 @@ class PopUps():
             return True
         else:
             return False
+        
+
 class Apple(GameObject):
     def __init__(self,pos,sMat):
         super().__init__(pos,sMat)
@@ -224,12 +230,12 @@ framerate = 60
 
 def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
     run = True
-    popup = PopUps([random.randint(0, SCREEN_WIDTH), random.randint(0, SCREEN_HEIGHT)])
+    #popup = PopUps([random.randint(0, SCREEN_WIDTH), random.randint(0, SCREEN_HEIGHT)])
     while run:
         screen.fill('black')
         keysPressed = pg.key.get_pressed()
-        if popup.check():
-            popup = PopUps([random.randint(0, SCREEN_WIDTH), random.randint(0, SCREEN_HEIGHT)])
+        """if popup.check():
+            popup = PopUps([random.randint(0, SCREEN_WIDTH), random.randint(0, SCREEN_HEIGHT)])"""
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
@@ -237,25 +243,26 @@ def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
             if event.type == SNAKE_EVENT:
                 GameObject.Collide(snake) #check collision first
                 snake.move() #main logic, operating one time per second. right now just moving.
-                musicBox.tick()
+                # musicBox.tick()
                 # print(snake) ho brah no need this no more...
                 if keysPressed[pg.K_RETURN]:
                     #print(GameObject.objList)
                     Apple([random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)],snake.sMat) # make apple.
         if keysPressed[pg.K_ESCAPE]:
-            run=False
+            return 1 # 1 for Pause menu
         snake.steer(keysPressed)
         if snake.pos[0] < 0 or snake.pos[0] >= snake.sMat.cols or snake.pos[1] < 0 or snake.pos[1] >= snake.sMat.rows:
-            screen.fill('yellow')
-        GameObject.Render(screen)
+            screen.fill('yellow') ## this also shouldnt come up
+        GameObject.Render(screen) # to be clear, renders all game objects.
         #musicbox stuff
-        musicBox.render(screen)
+        """musicBox.render(screen)
         popup.render()
         if musicBox.explode():
-            run = False
+            run = False"""
         pg.display.flip()
         clock.tick(framerate)
     menu.notstop = True
+
 
 
 
@@ -269,7 +276,7 @@ if __name__ == "__main__":
     musicBox = musicBox()
 
     framerate = 60
-    mainMenu = Menu(screenInp=screen, start_game=None, clocked=clock,win_h=SCREEN_HEIGHT,win_w=SCREEN_WIDTH) #testing w/ start-game = none
+    mainMenu = Menu(screenInp=screen, clocked=clock,win_h=SCREEN_HEIGHT,win_w=SCREEN_WIDTH) #testing w/ start-game = none
     while True:
         mainMenu.run()
         snakeGame(mainMenu,mainSnake)
