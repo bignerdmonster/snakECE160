@@ -37,7 +37,7 @@ class Button:
         )
 
 class Menu:
-    def __init__(self, screenInp=None, start_game=None, title="Stake (get it like start and snake lol)",clocked=pg.time.Clock(),win_w=1080, win_h=720):
+    def __init__(self, screenInp=None, title="Stake (get it like start and snake lol)",clocked=pg.time.Clock(),win_w=1080, win_h=720):
         self.notstop = True
         self.screen = screenInp or pg.display.set_mode((win_w, win_h), pg.SCALED, vsync=1)
         pg.display.set_caption(title)
@@ -65,6 +65,7 @@ class Menu:
         for line in self.lines:
             label = self.small_font.render(line, True, TEXT)
             self.screen.blit(label, label.get_rect(center=(self.win_w//2, 240 + self.lines.index(line) * 40)))
+            
     def _draw_main(self):
         title = self.title_font.render("snake", True, TEXT)
         self.screen.blit(title, title.get_rect(center=(self.win_w//2, self.win_h//2 - 120)))
