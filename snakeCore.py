@@ -35,7 +35,7 @@ class GameObject:
         if type(self) != PopUps:
             GameObject.objList.insert(0, self)
         else:
-            GameObject.objList.append(self)
+            GameObject.objList.append(self) ## popup needs to render last, and we can guarentee that by adding it into the last 
         self.pos = pos if pos else [0, 0] #yeah
         self.pos.append(0) if len(self.pos) == 2 else 1 ## 3d coordinates, from base.
         self.sMat = sMat # snake mat! 
