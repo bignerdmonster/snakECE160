@@ -1,10 +1,10 @@
 import pygame as pg
-
+import random, os, sys
 from menu import Menu
-import random
+
 pg.init() #strict typing
-SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
-COLUMN_COUNT, ROW_COUNT = 151, 111 #disgustingly out of fn. scope
+SCREEN_WIDTH, SCREEN_HEIGHT = 1080, 720
+COLUMN_COUNT, ROW_COUNT = 9, 5 ##d isgustingly out of fn. scope
 #logic to figure out square height & stuff
 CELL_LENGTH = SCREEN_WIDTH // COLUMN_COUNT
 CELL_HEIGHT = SCREEN_HEIGHT // ROW_COUNT ## #honestly who cares if they're square.
@@ -218,6 +218,7 @@ class Apple(GameObject):
     def collide(self, snake):
         snake.len += 1
         GameObject.objList.remove(self)
+        Apple([random.randint(0, COLUMN_COUNT),random.randint(0,ROW_COUNT)], mainMat)
 
 print("line 161")
 
@@ -249,7 +250,11 @@ def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
                     #print(GameObject.objList)
                     Apple([random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)],snake.sMat) # make apple.
         if keysPressed[pg.K_ESCAPE]:
-            return 1 # 1 for Pause menu
+            run = False
+            nextMenu = 1 # 1 for Pause menu
+        elif keysPressed[pg.K_v]:
+            print(0)
+            os.execv(sys.argv[0])
         snake.steer(keysPressed)
         if snake.pos[0] < 0 or snake.pos[0] >= snake.sMat.cols or snake.pos[1] < 0 or snake.pos[1] >= snake.sMat.rows:
             screen.fill('yellow') ## this also shouldnt come up
@@ -260,15 +265,16 @@ def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
         if musicBox.explode():
             run = False"""
         pg.display.flip()
-        clock.tick(framerate)
+        clock.tick()
     menu.notstop = True
+    print("ho")
 
 
 
 
 
 if __name__ == "__main__":
-
+    
     mainMat = SnakeMat(COLUMN_COUNT,ROW_COUNT)
     mainSnake = Snake(mainMat)
     Apple([5,5], mainMat)
@@ -280,5 +286,6 @@ if __name__ == "__main__":
     while True:
         mainMenu.run()
         snakeGame(mainMenu,mainSnake)
+    
 else:
     print("snakeCore imported, or YOU SHOULD RUN THIS WITH python3 snakeCore.py")
