@@ -114,7 +114,7 @@ class Snake(GameObject):
             self.bPos.pop() ## remove tail if array is bigger than length
         
         if self.specialFlags.get("debugPrint", False): # we can actaully adapt this system for like a boost or whatever.
-            print(self.bPos) 
+            print(GameObject.objList) 
             self.specialFlags["debugPrint"] = False # since inputs are processed 24/7, this allows a certain action to be queued, then happen when the snake moves. Works well!
             
     def steer(self, keys):
@@ -193,12 +193,11 @@ class musicBox():
             self.holding() #adds 2 secs to da timer
 
 class PopUps(GameObject):
-    def __init__(self, pos=[random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)]):
-        super().__init__(pos, mainMat)
-        self.pos = pos
+    def __init__(self, pos=None):
+        super().__init__((pos or [random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)]), mainMat)
         self.color = (255,255,255, 0.67)
-        self.rect[2] *= 4 # gross, but nessecary
-        self.rect[3] *= 4
+        self.rect[2] *= 16 # gross, but nessecary
+        self.rect[3] *= 16
         self.collideRect = pg.Rect(self.rect[0],self.rect[1],self.rect[2],self.rect[3])
         self.clicked = False
 
@@ -207,7 +206,7 @@ class PopUps(GameObject):
         if self.collideRect.collidepoint(pg.mouse.get_pos()) and (pg.mouse.get_pressed())[0]:
             GameObject.objList.remove(self)
             print("bam")
-            new = PopUps()
+            PopUps()
         super().render(screenV)
         
 
