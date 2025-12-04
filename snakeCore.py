@@ -1,10 +1,10 @@
 import pygame as pg
-import random, os, sys
+import random
 from menu import Menu
 
 pg.init() #strict typing
-SCREEN_WIDTH, SCREEN_HEIGHT = 720, 720
-COLUMN_COUNT, ROW_COUNT = 41, 41 ##d isgustingly out of fn. scope
+SCREEN_WIDTH, SCREEN_HEIGHT = 720, 720 ## IDEAL
+COLUMN_COUNT, ROW_COUNT = 41, 41 ## disgustingly out of fn. scope
 #logic to figure out square height & stuff
 CELL_LENGTH = SCREEN_WIDTH // COLUMN_COUNT
 CELL_HEIGHT = SCREEN_HEIGHT // ROW_COUNT ## #honestly who cares if they're square.
@@ -31,14 +31,14 @@ class SnakeMat:
 
 class GameObject:
     objList = []
-    def __init__(self, pos, sMat): ## how it feels to lazily assign pos to an actual strict value. idc.
+    def __init__(self, pos): ## how it feels to lazily assign pos to an actual strict value. idc.
         if type(self) != PopUps:
             GameObject.objList.insert(0, self)
         else:
             GameObject.objList.append(self) ## popup needs to render last, and we can guarentee that by adding it into the last 
         self.pos = pos if pos else [0, 0] #yeah
-        self.pos.append(0) if len(self.pos) == 2 else 1 ## 3d coordinates, from base.
-        self.sMat = sMat # snake mat! 
+        self.pos.append(0) if len(self.pos) == 2 else None ## 3d coordinates, from base.
+        #self.sMat = sMat # snake mat! ### UPDATAE: DO I EVEN NEED THE SNAKE MAT
         self.color = 'magenta' #if anything is magenta colored, that means it has been setup invalidly. warning color.
         self.rect = [CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT]
     def render(self, screenV=screen):
@@ -75,9 +75,10 @@ class Snake(GameObject):
         # ai code over
     def __init__(self, sMat, **args): #PLEASE pass custompos as a 3 val array if it is being used.
         initpos = sMat.center[:] if (not ('startPos' in args)) else args['startPos']
-        super().__init__(initpos, sMat) #sets self.pos, self.sMat,
+        super().__init__(initpos) #sets self.pos
+        self.cols,self.rows = sMat.cols, sMat.rows # begrudging.
         self.color = 'green'
-        self.bPos = [self.pos[:]] # bPos is an array containing all the positions where snake segments are. bPos[0] will always be the head, and segments get older as you progress through the array. 0, 1 0, 2 1 0, etc.
+        #self.bPos = [self.pos[:]] # bPos is an array containing all the positions where snake segments are. bPos[0] will always be the head, and segments get older as you progress through the array. 0, 1 0, 2 1 0, etc.
         self.direction = pg.Vector3(1,0,0) # three-dimensional movement possibilites. also start by moving right to avoid self collision at beginning
         self.specialFlags = {} # for custom controls-ish
 
@@ -94,30 +95,29 @@ class Snake(GameObject):
             self.right = pg.K_d
             self.interact = pg.K_e
         
-        self.sMat = sMat
-        sMat.mat[self.pos[0]][self.pos[1]] = 2 ## 2 is the snake's head. the AI is mimicking my style. this is black mirror to an extent which i find strange.
+        #self.sMat = sMat
+        #sMat.mat[self.pos[0]][self.pos[1]] = 2 ## 2 is the snake's head. the AI is mimicking my style. this is black mirror to an extent which i find strange.
         self.len = 1  # length of snake; used to determine when to pop tail
 
     def futurePos(self):
         ##  basically, this returns coordinates. It's the movement function, but doesn't update the movement 
-        return [((self.pos[0] + int(self.direction.x)) % self.sMat.cols), 
-                ((self.pos[1] + int(self.direction.y)) % self.sMat.rows), 
+        return [((self.pos[0] + int(self.direction.x)) % self.cols), 
+                ((self.pos[1] + int(self.direction.y)) % self.rows), 
                 (self.pos[2] + int(self.direction.z))]
     
     def collide(self, obj):
         #print(type(self),type(obj))
         if self.futurePos() == obj.pos:
             obj.collide(self)
-        elif self.futurePos() in self.bPos:
-            print("go to Achilles stage manager")
-            pass
 
     def move(self):
         self.pos = self.futurePos()[:]
         self.rect = [CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT] #rect
-        self.bPos.insert(0, self.pos[:]) ## insert the new head position at the start of the list
-        if len(self.bPos) > self.len:
-            self.bPos.pop() ## remove tail if array is bigger than length
+        SnakeTail.tailList.insert(0, SnakeTail(self.pos[:])) ## insert the new head position at the start of the list
+        if len(SnakeTail.tailList) > self.len:
+            print("test")
+            SnakeTail.Sever() ## remove tail if array is bigger than length
+            ## todo: figure out triple collision!?!?!? update: it doesn't matter, we just can ignore it for now
         
         if self.specialFlags.get("debugPrint", False): # we can actaully adapt this system for like a boost or whatever.
             Apple.Reset() 
@@ -136,7 +136,7 @@ class Snake(GameObject):
             self.specialFlags["debugPrint"] = True # removed length increase cuz jank, did i mess up array?
         else:
             pass # I think this is needed... try check
-    def __str__(self): ## entirely for print debugging. do we reaaaly need this?
+    """def __str__(self): ## entirely for print debugging. do we reaaaly need this?
         retStr = ""
         tempMat = [[0 for place in range(self.sMat.cols)] for row in range(self.sMat.rows)]
         for i, segment in enumerate(self.bPos):
@@ -148,13 +148,29 @@ class Snake(GameObject):
             # holy jank
         for row in tempMat:
             retStr += ' '.join([str(elem) for elem in row]) + "\n"
-        return retStr
-    def render(self, screenV):
+        return retStr""" ## commented out to see if we need snakemat
+    """def render(self, screenV):
         super().render(screenV) ## the snake's main render object will be its head.
         for segment in self.bPos[1:]: #ok, so this is the rest of the snake. the body isn't stored as a gameobject
             ## as a result, we render the rest of the cells in bPos, but we don't compute them as real... maybe this needs a rework 
             pg.draw.rect(screenV, 'yellow', [CELL_LENGTH*segment[0], CELL_HEIGHT*segment[1], CELL_LENGTH, CELL_HEIGHT])
-        pass
+        pass""" #omg this might work
+
+class SnakeTail(GameObject):
+    tailList = []
+    def __init__(self, pos=[0,0,0]):
+        super().__init__(pos)
+        self.color = 'yellow'
+
+    def collide(self, snake):
+        print("Achilles' stage manager should throw something out for this")
+        self.color = 'blue'
+      
+    @classmethod
+    def Sever(cls):
+        GameObject.objList.remove(cls.tailList.pop())
+        
+
 
 #funny fnaf music box
 class musicBox():
@@ -193,14 +209,13 @@ class musicBox():
         screenV.blit(text, (self.mB.x + 10, self.mB.y + 10))
 
         #handles if they're winding it
-        mouse_x, mouse_y = pg.mouse.get_pos()
-        mouse_pressed = pg.mouse.get_pressed()
-        if self.mB.collidepoint(mouse_x, mouse_y) and mouse_pressed[0]:
+       
+        if self.mB.collidepoint(pg.mouse.get_pos()) and ((pg.mouse.get_pressed())[0]):
             self.holding() #adds 2 secs to da timer
 
 class PopUps(GameObject):
     def __init__(self, pos=None):
-        super().__init__((pos or [random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)]), mainMat)
+        super().__init__((pos or [random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)]))
         self.color = (255,255,255, 0.67)
         self.rect[2] *= 16 # gross, but nessecary
         self.rect[3] *= 16
@@ -211,37 +226,44 @@ class PopUps(GameObject):
     def render(self, screenV=screen):
         if self.collideRect.collidepoint(pg.mouse.get_pos()) and (pg.mouse.get_pressed())[0]:
             GameObject.objList.remove(self)
-            print("bam")
+            # print("bam") no need
             PopUps()
         super().render(screenV)
         
 
 class Apple(GameObject):
-    def __init__(self,pos,sMat):
-        super().__init__(pos,sMat)
+    def __init__(self,pos):
+        super().__init__(pos)
         self.color = (255,0,0)
 
     def collide(self, snake):
         snake.len += 1
         GameObject.objList.remove(self)
-        Apple([random.randint(0, COLUMN_COUNT),random.randint(0,ROW_COUNT)], self.sMat)
+        Apple([random.randint(0, COLUMN_COUNT),random.randint(0,ROW_COUNT)])
 
 
-print("line 161")
+print("line 161") ## this will stay here forever, as a memory to days long gone
 
 
 SNAKE_EVENT = pg.USEREVENT + 1
 pg.time.set_timer(SNAKE_EVENT, 67) # every 1 s, the snake allegedly moves.
 
 print("Starting")
+
 framerate = 60
 
 def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
     run = True
-    popup = PopUps()
+
+    PopUps() ## create a popup! alan will probably change this later with the stage manager
+
     while run:
         screen.fill('black')
         keysPressed = pg.key.get_pressed()
+
+        if keysPressed[pg.K_ESCAPE]: ## this is up here to break before anything else
+            run = False
+            nextMenu = 1 # 1 for Pause menu
 
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -249,18 +271,18 @@ def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
                 exit(0)
             if event.type == SNAKE_EVENT:
                 GameObject.Collide(snake) #check collision first
+
                 snake.move() #main logic, operating one time per second. right now just moving.
                 # musicBox.tick()
-                # print(snake) ho brah no need this no more...
+
                 if keysPressed[pg.K_RETURN]:
-                    #print(GameObject.objList)
-                    Apple([random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)],snake.sMat) # make apple.
-        if keysPressed[pg.K_ESCAPE]:
-            run = False
-            nextMenu = 1 # 1 for Pause menu
+                    #spawn apples! 
+                    Apple([random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)]) # make apple.
+        
+        
+        
         snake.steer(keysPressed)
-        if snake.pos[0] < 0 or snake.pos[0] >= snake.sMat.cols or snake.pos[1] < 0 or snake.pos[1] >= snake.sMat.rows:
-            screen.fill('yellow') ## this also shouldnt come up
+        
         GameObject.Render(screen) # to be clear, renders all game objects.
 
         #musicbox stuff
@@ -281,7 +303,7 @@ if __name__ == "__main__":
     
     mainMat = SnakeMat(COLUMN_COUNT,ROW_COUNT)
     mainSnake = Snake(mainMat)
-    Apple([5,5], mainMat)
+    Apple([5,5])
     clock = pg.time.Clock()
     musicBox = musicBox()
 
