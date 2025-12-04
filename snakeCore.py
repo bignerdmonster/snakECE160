@@ -12,18 +12,7 @@ CELL_DIMS = (CELL_LENGTH, CELL_HEIGHT) ## Too lazy to implement properly
 screen = pg.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), pg.SCALED, vsync=1) # i mean, i'll leave function references to this variable, but really it can just be constant.
 
 
-class Progression:
-    def __init__(self):
-        self.lvl = {
-            1: "popup"
-        }
-        self.unlock = []
-    def check(self, length):
-        for i, k in self.lvl.items():
-            if length >= i and k  not in self.unlock:
-                self.unlock.append(k)
-                print(f"Unlocked {k}")
-        return self.unlock
+
 
 class SnakeMat:
     def __init__(self, cols=15, rows=11):
@@ -37,7 +26,7 @@ class SnakeMat:
         for row in self.mat:
             retStr += ' '.join([str(elem) for elem in row]) + "\n"
         return retStr.strip()
-    # i am dizzy. i will rest now. (ai told me to rest, i am "OBEYING" LAUGHING MY ASS OFF WTF) ### jacinthe's battle theme is REALLY good.
+    # i am dizzy. i will rest now. (ai told me to rest, i am "OBEYING" LAUGHING MY ASS OFF WTF) ### jacinthe's battle theme is REALLY good. 
 
 
 class GameObject:
@@ -46,14 +35,13 @@ class GameObject:
         GameObject.objList.append(self) # keep track.
         self.pos = pos if pos else [0, 0] #yeah
         self.pos.append(0) if len(self.pos) == 2 else 1 ## 3d coordinates, from base.
-        self.sMat = sMat # snake mat!
+        self.sMat = sMat # snake mat! 
         self.color = 'magenta' #if anything is magenta colored, that means it has been setup invalidly. warning color.
         self.rect = [CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT]
-        self.enabled = True
     def render(self, screenV=screen):
         #print(self.color)
         pg.draw.rect(screenV, self.color, self.rect)
-
+    
     def collide(self, snake):
         print(self.__class__, "collided with snake!")
 
@@ -88,7 +76,7 @@ class Snake(GameObject):
         self.specialFlags = {} # for custom controls-ish
 
         if 'controls' in args.keys(): # ALL OF THESE HAVE TO EXIST OR THE PROGRAM DIES.
-            self.up = args['controls']['up']
+            self.up = args['controls']['up'] 
             self.down = args['controls']['down']
             self.left = args['controls']['left']
             self.right = args['controls']['right']
@@ -99,17 +87,17 @@ class Snake(GameObject):
             self.left = pg.K_a
             self.right = pg.K_d
             self.interact = pg.K_e
-
+        
         self.sMat = sMat
         sMat.mat[self.pos[0]][self.pos[1]] = 2 ## 2 is the snake's head. the AI is mimicking my style. this is black mirror to an extent which i find strange.
         self.len = 1  # length of snake; used to determine when to pop tail
 
     def futurePos(self):
-        ##  basically, this returns coordinates. It's the movement function, but doesn't update the movement
-        return [((self.pos[0] + int(self.direction.x)) % self.sMat.cols),
-                ((self.pos[1] + int(self.direction.y)) % self.sMat.rows),
+        ##  basically, this returns coordinates. It's the movement function, but doesn't update the movement 
+        return [((self.pos[0] + int(self.direction.x)) % self.sMat.cols), 
+                ((self.pos[1] + int(self.direction.y)) % self.sMat.rows), 
                 (self.pos[2] + int(self.direction.z))]
-
+    
     def collide(self, obj):
         #print(type(self),type(obj))
         if self.futurePos() == obj.pos:
@@ -124,11 +112,11 @@ class Snake(GameObject):
         self.bPos.insert(0, self.pos[:]) ## insert the new head position at the start of the list
         if len(self.bPos) > self.len:
             self.bPos.pop() ## remove tail if array is bigger than length
-
+        
         if self.specialFlags.get("debugPrint", False): # we can actaully adapt this system for like a boost or whatever.
-            print(GameObject.objList)
+            print(GameObject.objList) 
             self.specialFlags["debugPrint"] = False # since inputs are processed 24/7, this allows a certain action to be queued, then happen when the snake moves. Works well!
-
+            
     def steer(self, keys):
         if keys[self.up]:
             self.direction = pg.Vector3(0,-1,0) if self.direction.y != 1 else self.direction
@@ -150,7 +138,7 @@ class Snake(GameObject):
             if i == 0:
                 tempMat[segment[1]][segment[0]] = 2 # head
             else:
-                tempMat[segment[1]][segment[0]] = 1 # body
+                tempMat[segment[1]][segment[0]] = 1 # body  
             # holy jank
         for row in tempMat:
             retStr += ' '.join([str(elem) for elem in row]) + "\n"
@@ -220,7 +208,7 @@ class PopUps(GameObject):
             print("bam")
             PopUps()
         super().render(screenV)
-
+        
 
 class Apple(GameObject):
     def __init__(self,pos,sMat):
