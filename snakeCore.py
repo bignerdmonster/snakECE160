@@ -109,7 +109,7 @@ class Snake(GameObject):
         if self.futurePos() == obj.pos:
             obj.collide(self)
         elif self.futurePos() in self.bPos:
-            print("yo this should probably end the game")
+            print("go to Achilles stage manager")
             pass
 
     def move(self):
@@ -136,7 +136,7 @@ class Snake(GameObject):
             self.specialFlags["debugPrint"] = True # removed length increase cuz jank, did i mess up array?
         else:
             pass # I think this is needed... try check
-    def __str__(self):
+    def __str__(self): ## entirely for print debugging. do we reaaaly need this?
         retStr = ""
         tempMat = [[0 for place in range(self.sMat.cols)] for row in range(self.sMat.rows)]
         for i, segment in enumerate(self.bPos):
@@ -150,9 +150,9 @@ class Snake(GameObject):
             retStr += ' '.join([str(elem) for elem in row]) + "\n"
         return retStr
     def render(self, screenV):
-        super().render(screenV)
-
-        for segment in self.bPos[1:]:
+        super().render(screenV) ## the snake's main render object will be its head.
+        for segment in self.bPos[1:]: #ok, so this is the rest of the snake. the body isn't stored as a gameobject
+            ## as a result, we render the rest of the cells in bPos, but we don't compute them as real... maybe this needs a rework 
             pg.draw.rect(screenV, 'yellow', [CELL_LENGTH*segment[0], CELL_HEIGHT*segment[1], CELL_LENGTH, CELL_HEIGHT])
         pass
 
