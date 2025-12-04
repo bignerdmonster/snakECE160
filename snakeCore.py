@@ -12,7 +12,29 @@ CELL_DIMS = (CELL_LENGTH, CELL_HEIGHT) ## Too lazy to implement properly
 screen = pg.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), pg.SCALED, vsync=1) # i mean, i'll leave function references to this variable, but really it can just be constant.
 
 
+class Progression():
+    def __init__(self):
+        self.lvls = {
+            3: "popup"
+        }
+        self.unlocked = set()
 
+
+    def check(self, length):
+        newly_unlocked = []
+
+        for n, f in self.lvls.items():
+            if length >= n:
+                if not self.unlocked.__contains__(f):
+                    print(f"unlocked {f}")
+                    self.unlocked.add(f)
+                newly_unlocked.append(f)
+        return newly_unlocked
+    def contain(self, name):
+        if name in self.lvls:
+            return True
+        else:
+            return False
 
 class SnakeMat:
     def __init__(self, cols=15, rows=11):
@@ -232,7 +254,9 @@ framerate = 60
 def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
     run = True
     popup = PopUps()
+    progress = Progression()
     while run:
+        progress.check(snake.len)
         screen.fill('black')
         keysPressed = pg.key.get_pressed()
 
@@ -248,6 +272,8 @@ def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
                 if keysPressed[pg.K_RETURN]:
                     #print(GameObject.objList)
                     Apple([random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)],snake.sMat) # make apple.
+                if progress.contain("popup"):
+                    print("a")
         if keysPressed[pg.K_ESCAPE]:
             run = False
             nextMenu = 1 # 1 for Pause menu
