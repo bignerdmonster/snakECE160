@@ -38,7 +38,6 @@ class GameObject:
             GameObject.objList.append(self) ## popup needs to render last, and we can guarentee that by adding it into the last 
         self.pos = pos if pos else [0, 0] #yeah
         self.pos.append(0) if len(self.pos) == 2 else None ## 3d coordinates, from base.
-        #self.sMat = sMat # snake mat! ### UPDATAE: DO I EVEN NEED THE SNAKE MAT
         self.color = 'magenta' #if anything is magenta colored, that means it has been setup invalidly. warning color.
         self.rect = [CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT]
     def render(self, screenV=screen):
@@ -78,7 +77,7 @@ class Snake(GameObject):
         super().__init__(initpos) #sets self.pos
         self.cols,self.rows = sMat.cols, sMat.rows # begrudging.
         self.color = 'green'
-        #self.bPos = [self.pos[:]] # bPos is an array containing all the positions where snake segments are. bPos[0] will always be the head, and segments get older as you progress through the array. 0, 1 0, 2 1 0, etc.
+        
         self.direction = pg.Vector3(1,0,0) # three-dimensional movement possibilites. also start by moving right to avoid self collision at beginning
         self.specialFlags = {} # for custom controls-ish
 
@@ -95,8 +94,7 @@ class Snake(GameObject):
             self.right = pg.K_d
             self.interact = pg.K_e
         
-        #self.sMat = sMat
-        #sMat.mat[self.pos[0]][self.pos[1]] = 2 ## 2 is the snake's head. the AI is mimicking my style. this is black mirror to an extent which i find strange.
+        
         self.len = 1  # length of snake; used to determine when to pop tail
 
     def futurePos(self):
@@ -136,26 +134,7 @@ class Snake(GameObject):
             self.specialFlags["debugPrint"] = True # removed length increase cuz jank, did i mess up array?
         else:
             pass # I think this is needed... try check
-    """def __str__(self): ## entirely for print debugging. do we reaaaly need this?
-        retStr = ""
-        tempMat = [[0 for place in range(self.sMat.cols)] for row in range(self.sMat.rows)]
-        for i, segment in enumerate(self.bPos):
-            print(segment)
-            if i == 0:
-                tempMat[segment[1]][segment[0]] = 2 # head
-            else:
-                tempMat[segment[1]][segment[0]] = 1 # body  
-            # holy jank
-        for row in tempMat:
-            retStr += ' '.join([str(elem) for elem in row]) + "\n"
-        return retStr""" ## commented out to see if we need snakemat
-    """def render(self, screenV):
-        super().render(screenV) ## the snake's main render object will be its head.
-        for segment in self.bPos[1:]: #ok, so this is the rest of the snake. the body isn't stored as a gameobject
-            ## as a result, we render the rest of the cells in bPos, but we don't compute them as real... maybe this needs a rework 
-            pg.draw.rect(screenV, 'yellow', [CELL_LENGTH*segment[0], CELL_HEIGHT*segment[1], CELL_LENGTH, CELL_HEIGHT])
-        pass""" #omg this might work
-
+    
 class SnakeTail(GameObject):
     tailList = []
     def __init__(self, pos=[0,0,0]):
