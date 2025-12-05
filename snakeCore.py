@@ -255,7 +255,7 @@ pg.time.set_timer(SNAKE_EVENT, 67) # every 1 s, the snake allegedly moves.
 print("Starting")
 
 framerate = 60
-image = pg.transform.scale(pg.image.load("images/bg.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+image = pg.transform.scale(pg.image.load("media/ramprice.PNG").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
 def snakeGame(menu, snake, progress): ## this is the actual main game loop function!! yay
     run = True
     
