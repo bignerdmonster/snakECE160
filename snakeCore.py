@@ -112,12 +112,16 @@ class Snake(GameObject):
             self.left = args['controls']['left']
             self.right = args['controls']['right']
             self.interact = args['controls']['interact']
+            self.accel = args['controls']['accel']
+            self.decel = args['controls']['decel']
         else: #default case... jacinthe's theme slaps so hard.
             self.up = pg.K_w
             self.down = pg.K_s
             self.left = pg.K_a
             self.right = pg.K_d
             self.interact = pg.K_e
+            self.accel = pg.K_UP
+            self.decel = pg.K_DOWN
         
 
         self.len = 1  # length of snake; used to determine when to pop tail
@@ -145,7 +149,9 @@ class Snake(GameObject):
         if self.specialFlags.get("debugPrint", False): # we can actaully adapt this system for like a boost or whatever.
             Apple.Reset()
             self.specialFlags["debugPrint"] = False # since inputs are processed 24/7, this allows a certain action to be queued, then happen when the snake moves. Works well!
-            
+        if self.specialFlags.get("accel", False):
+            self.direction *= 2
+            self.specialFlags['accel'] = False    
     def steer(self, keys):
         if keys[self.up]:
             self.direction = pg.Vector3(0,-1,0) if self.direction.y != 1 else self.direction
@@ -157,6 +163,8 @@ class Snake(GameObject):
             self.direction = pg.Vector3(1,0,0) if self.direction.x != -1 else self.direction
         if keys[self.interact]:
             self.specialFlags["debugPrint"] = True # removed length increase cuz jank, did i mess up array?
+        if keys[self.accel]:
+            self.specialFlags['accel'] = True
         else:
             pass # I think this is needed... try check
 
