@@ -134,10 +134,10 @@ class Snake(GameObject):
 
     def move(self):
         self.pos = self.futurePos()[:]
-        self.rect = [CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT] #rect
+        self.rect[0], self.rect[1] = (CELL_LENGTH*self.pos[0]), (CELL_HEIGHT*self.pos[1])#rect updater
         SnakeTail.tailList.insert(0, SnakeTail(self.pos[:])) ## insert the new head position at the start of the list
         if len(SnakeTail.tailList) > self.len:
-            print("test")
+
             SnakeTail.Sever() ## remove tail if array is bigger than length
             ## todo: figure out triple collision!?!?!? update: it doesn't matter, we just can ignore it for now
         
@@ -229,7 +229,6 @@ class PopUps(GameObject):
     def render(self, screenV=screen):
         if self.collideRect.collidepoint(pg.mouse.get_pos()) and (pg.mouse.get_pressed())[0]:
             GameObject.objList.remove(self)
-            print("bam")
             PopUps()
         super().render(screenV)
         
@@ -257,7 +256,6 @@ framerate = 60
 
 def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
     run = True
-    PopUps()
     progress = Progression()
     while run:
         progress.check(snake.len)
