@@ -15,7 +15,8 @@ screen = pg.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), pg.SCALED, vsync=1) #
 class Progression():
     def __init__(self):
         self.lvls = {
-            3: "popup"
+            3: "popup",
+            5: "music_box"
         }
         self.unlocked = []
         self.activated = []
@@ -257,7 +258,6 @@ framerate = 60
 
 def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
     run = True
-    PopUps()
     progress = Progression()
     while run:
         progress.check(snake.len)
@@ -275,7 +275,7 @@ def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
             if event.type == SNAKE_EVENT:
                 GameObject.Collide(snake) #check collision first
 
-                snake.move() #main logic, operating one time per second. right now just moving.
+                snake.move() #main aaaaalogic, operating one time per second. right now just moving.
                 # musicBox.tick()
 
                 if keysPressed[pg.K_RETURN]:
