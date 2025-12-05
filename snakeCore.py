@@ -255,9 +255,9 @@ print("Starting")
 
 framerate = 60
 
-def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
+def snakeGame(menu, snake, progress): ## this is the actual main game loop function!! yay
     run = True
-    progress = Progression()
+    
     while run:
         progress.check(snake.len)
         screen.fill('black')
@@ -316,7 +316,7 @@ if __name__ == "__main__":
     mainMenu = Menu(screenInp=screen, clocked=clock,win_h=SCREEN_HEIGHT,win_w=SCREEN_WIDTH) #testing w/ start-game = none
     while True:
         mainMenu.run()
-        snakeGame(mainMenu,mainSnake)
+        snakeGame(mainMenu,mainSnake, Progression())
     
 else:
     print("snakeCore imported, or YOU SHOULD RUN THIS WITH python3 snakeCore.py")
