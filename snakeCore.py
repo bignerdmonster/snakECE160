@@ -17,8 +17,8 @@ class Progression():
         self.lvls = {
             3: "popup"
         }
-        self.unlocked = set()
-
+        self.unlocked = []
+        self.activated = []
 
     def check(self, length):
         newly_unlocked = []
@@ -27,11 +27,13 @@ class Progression():
             if length >= n:
                 if not self.unlocked.__contains__(f):
                     print(f"unlocked {f}")
-                    self.unlocked.add(f)
+                    self.unlocked.append(f)
+                    self.activated.append(f)
                 newly_unlocked.append(f)
         return newly_unlocked
     def contain(self, name):
-        if name in self.lvls:
+        if name in self.unlocked and name in self.activated:
+            self.activated.remove(name)
             return True
         else:
             return False
@@ -57,9 +59,9 @@ class GameObject:
         if type(self) != PopUps:
             GameObject.objList.insert(0, self)
         else:
-            GameObject.objList.append(self) ## popup needs to render last, and we can guarentee that by adding it into the last 
+            GameObject.objList.append(self) ## popup needs to render last, and we can guarentee that by adding it into the last
         self.pos = pos if pos else [0, 0] #yeah
-        self.pos.append(0) if len(self.pos) == 2 else None ## 3d coordinates, from base.
+        self.pos.append(0) if len(self.pos) == 2 else 1 ## 3d coordinates, from base.
         self.color = 'magenta' #if anything is magenta colored, that means it has been setup invalidly. warning color.
         self.rect = [CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT]
     def render(self, screenV=screen):
@@ -68,7 +70,7 @@ class GameObject:
     
     def collide(self, snake):
         print(self.__class__, "collided with snake!")
-    
+
 
     @classmethod
     def Render(cls, screenV=screen):
@@ -99,7 +101,7 @@ class Snake(GameObject):
         super().__init__(initpos) #sets self.pos
         self.cols,self.rows = sMat.cols, sMat.rows # begrudging.
         self.color = 'green'
-        
+
         self.direction = pg.Vector3(1,0,0) # three-dimensional movement possibilites. also start by moving right to avoid self collision at beginning
         self.specialFlags = {} # for custom controls-ish
 
@@ -116,13 +118,13 @@ class Snake(GameObject):
             self.right = pg.K_d
             self.interact = pg.K_e
         
-        
+
         self.len = 1  # length of snake; used to determine when to pop tail
 
     def futurePos(self):
         ##  basically, this returns coordinates. It's the movement function, but doesn't update the movement 
-        return [((self.pos[0] + int(self.direction.x)) % self.cols), 
-                ((self.pos[1] + int(self.direction.y)) % self.rows), 
+        return [((self.pos[0] + int(self.direction.x)) % self.cols),
+                ((self.pos[1] + int(self.direction.y)) % self.rows),
                 (self.pos[2] + int(self.direction.z))]
     
     def collide(self, obj):
@@ -140,7 +142,7 @@ class Snake(GameObject):
             ## todo: figure out triple collision!?!?!? update: it doesn't matter, we just can ignore it for now
         
         if self.specialFlags.get("debugPrint", False): # we can actaully adapt this system for like a boost or whatever.
-            Apple.Reset() 
+            Apple.Reset()
             self.specialFlags["debugPrint"] = False # since inputs are processed 24/7, this allows a certain action to be queued, then happen when the snake moves. Works well!
             
     def steer(self, keys):
@@ -156,7 +158,7 @@ class Snake(GameObject):
             self.specialFlags["debugPrint"] = True # removed length increase cuz jank, did i mess up array?
         else:
             pass # I think this is needed... try check
-    
+
 class SnakeTail(GameObject):
     tailList = []
     def __init__(self, pos=[0,0,0]):
@@ -166,11 +168,11 @@ class SnakeTail(GameObject):
     def collide(self, snake):
         print("Achilles' stage manager should throw something out for this")
         self.color = 'blue'
-      
+
     @classmethod
     def Sever(cls):
         GameObject.objList.remove(cls.tailList.pop())
-        
+
 
 
 #funny fnaf music box
@@ -210,7 +212,7 @@ class musicBox():
         screenV.blit(text, (self.mB.x + 10, self.mB.y + 10))
 
         #handles if they're winding it
-       
+
         if self.mB.collidepoint(pg.mouse.get_pos()) and ((pg.mouse.get_pressed())[0]):
             self.holding() #adds 2 secs to da timer
 
@@ -280,12 +282,13 @@ def snakeGame(menu, snake): ## this is the actual main game loop function!! yay
                     #print(GameObject.objList)
                     Apple([random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)]) # make apple.
                 if progress.contain("popup"):
-                    print("a")
+                    PopUps()
+
         if keysPressed[pg.K_ESCAPE]:
             run = False
             nextMenu = 1 # 1 for Pause menu
         snake.steer(keysPressed)
-        
+
         GameObject.Render(screen) # to be clear, renders all game objects.
 
         #musicbox stuff
