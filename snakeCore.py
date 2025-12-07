@@ -120,15 +120,13 @@ class Snake(GameObject):
             self.left = pg.K_a
             self.right = pg.K_d
             self.interact = pg.K_e
-            self.accel = pg.K_UP
-            self.decel = pg.K_DOWN
         
 
         self.len = 1  # length of snake; used to determine when to pop tail
 
     def futurePos(self):
         ##  basically, this returns coordinates. It's the movement function, but doesn't update the movement 
-        return [((self.pos[0] + int(self.direction.x)) % COLUMN_COUNT),
+        return [((self.pos[0] + int(self.direction.x)) % self.cols),
                 ((self.pos[1] + int(self.direction.y)) % ROW_COUNT),
                 (self.pos[2] + int(self.direction.z))]
     
@@ -149,9 +147,7 @@ class Snake(GameObject):
         if self.specialFlags.get("debugPrint", False): # we can actaully adapt this system for like a boost or whatever.
             Apple.Reset()
             self.specialFlags["debugPrint"] = False # since inputs are processed 24/7, this allows a certain action to be queued, then happen when the snake moves. Works well!
-        if self.specialFlags.get("accel", False):
-            self.direction *= 2
-            self.specialFlags['accel'] = False    
+         
     def steer(self, keys):
         if keys[self.up]:
             self.direction = pg.Vector3(0,-1,0) if self.direction.y != 1 else self.direction
@@ -163,8 +159,6 @@ class Snake(GameObject):
             self.direction = pg.Vector3(1,0,0) if self.direction.x != -1 else self.direction
         if keys[self.interact]:
             self.specialFlags["debugPrint"] = True # removed length increase cuz jank, did i mess up array?
-        if keys[self.accel]:
-            self.specialFlags['accel'] = True
         else:
             pass # I think this is needed... try check
 
@@ -243,18 +237,22 @@ class PopUps(GameObject):
         
 
 class Apple(GameObject):
-    def __init__(self,pos=[random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)]):
-        super().__init__(pos)
+    def __init__(self,pos=None):
+        super().__init__(pos or [random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)])
         self.color = (255,0,0)
 
     def collide(self, snake):
+        print(snake.len)
         snake.len += 1
+        print (snake.len)
         print("ran") ## heeeyyyy copilot, how you doin? ## love you long time ##ok thanks man. can you help explain why the Apple isn't being removed from the objList, and why another Apple isn't being spawned? thanks xoxo 
         ## sure thing buddy! looks like in the collide method of the Apple class, you're removing the Apple instance from the GameObject.objList and then creating a new Apple instance. this should work as intended. however, if you're experiencing issues, it might be due to how the collision detection is set up or how the GameObject.objList is being managed elsewhere in your code. make sure that the collision detection is correctly identifying when the snake collides with the apple, and that there are no other parts of your code that might be interfering with the objList. if everything seems correct, you might want to add some debug prints to verify that the collide method is being called as expected. let me know if you need further assistance!
         ## so, the print("ran") shows up, meaning the collide method is being called. but the apple isn't being removed from the objList, nor is a new apple being spawned. any ideas? 
         # ## hmm, if the print statement is showing up, that means the collide method is indeed being called. one possibility is that there might be multiple instances of the Apple class in the GameObject.objList, and the one being removed isn't the one that's actually colliding with the snake. to verify this, you could add a debug print statement right before removing the apple to print out the current objList and see if the apple instance is actually present there. another thing to check is whether there are any other parts of your code that might be re-adding the apple back into the objList after it's been removed. if you still can't figure it out, feel free to share more of your code or any additional context, and i'll do my best to help you debug it!
         ## thanks my clanka ## no problem buddy, happy to help! good luck with your coding! xoxo
+        print(GameObject.objList.count(self))
         GameObject.objList.remove(self)
+        print(GameObject.objList.count(any), "new 2")
         Apple()
 
 
