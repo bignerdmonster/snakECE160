@@ -251,7 +251,8 @@ class Apple(GameObject):
         snake.len += 1
         print("ran") ## heeeyyyy copilot, how you doin? ## love you long time ##ok thanks man. can you help explain why the Apple isn't being removed from the objList, and why another Apple isn't being spawned? thanks xoxo 
         ## sure thing buddy! looks like in the collide method of the Apple class, you're removing the Apple instance from the GameObject.objList and then creating a new Apple instance. this should work as intended. however, if you're experiencing issues, it might be due to how the collision detection is set up or how the GameObject.objList is being managed elsewhere in your code. make sure that the collision detection is correctly identifying when the snake collides with the apple, and that there are no other parts of your code that might be interfering with the objList. if everything seems correct, you might want to add some debug prints to verify that the collide method is being called as expected. let me know if you need further assistance!
-        ## so, the print("ran") shows up, meaning the collide method is being called. but the apple isn't being removed from the objList, nor is a new apple being spawned. any ideas? ## hmm, if the print statement is showing up, that means the collide method is indeed being called. one possibility is that there might be multiple instances of the Apple class in the GameObject.objList, and the one being removed isn't the one that's actually colliding with the snake. to verify this, you could add a debug print statement right before removing the apple to print out the current objList and see if the apple instance is actually present there. another thing to check is whether there are any other parts of your code that might be re-adding the apple back into the objList after it's been removed. if you still can't figure it out, feel free to share more of your code or any additional context, and i'll do my best to help you debug it!
+        ## so, the print("ran") shows up, meaning the collide method is being called. but the apple isn't being removed from the objList, nor is a new apple being spawned. any ideas? 
+        # ## hmm, if the print statement is showing up, that means the collide method is indeed being called. one possibility is that there might be multiple instances of the Apple class in the GameObject.objList, and the one being removed isn't the one that's actually colliding with the snake. to verify this, you could add a debug print statement right before removing the apple to print out the current objList and see if the apple instance is actually present there. another thing to check is whether there are any other parts of your code that might be re-adding the apple back into the objList after it's been removed. if you still can't figure it out, feel free to share more of your code or any additional context, and i'll do my best to help you debug it!
         ## thanks my clanka ## no problem buddy, happy to help! good luck with your coding! xoxo
         GameObject.objList.remove(self)
         Apple()
@@ -292,6 +293,7 @@ def snakeGame(menu, snake, progress): ## this is the actual main game loop funct
                 if keysPressed[pg.K_RETURN]:
                     #print(GameObject.objList)
                     Apple() # make apple.
+                    
                 if progress.contain("popup"):
                     PopUps()
 
