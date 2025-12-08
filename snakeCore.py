@@ -178,7 +178,7 @@ class SnakeTail(GameObject):
 
 
 
-#funny fnaf music box
+#funny music box
 class musicBox():
     def __init__(self, time = 450):
         self.maxtime = time
@@ -228,6 +228,9 @@ class PopUps(GameObject):
         self.collideRect = pg.Rect(self.rect[0],self.rect[1],self.rect[2],self.rect[3])
         self.clicked = False
 
+class QTE(GameObject):
+    def __init__(self, pos=None):
+        super().__init__(pos or  [random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)])
 
     def render(self, screenV=screen):
         if self.collideRect.collidepoint(pg.mouse.get_pos()) and (pg.mouse.get_pressed())[0]:
@@ -294,7 +297,11 @@ def snakeGame(menu, snake, progress): ## this is the actual main game loop funct
                     
                 if progress.contain("popup"):
                     PopUps()
-
+                if progress.contain("music_box"):
+                    mus = musicBox()
+                if "music_box" in progress.unlocked:
+                    mus.render(screen)
+                    mus.tick()
         if keysPressed[pg.K_ESCAPE]:
             run = False
             nextMenu = 1 # 1 for Pause menu
@@ -322,7 +329,6 @@ if __name__ == "__main__":
     mainSnake = Snake(mainMat)
     Apple()
     clock = pg.time.Clock()
-    musicBox = musicBox()
 
     framerate = 60
     mainMenu = Menu(screenInp=screen, clocked=clock,win_h=SCREEN_HEIGHT,win_w=SCREEN_WIDTH) #testing w/ start-game = none
