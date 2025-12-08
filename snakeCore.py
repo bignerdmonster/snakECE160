@@ -12,6 +12,11 @@ CELL_HEIGHT = SCREEN_HEIGHT // ROW_COUNT ## #honestly who cares if they're squar
 CELL_DIMS = (CELL_LENGTH, CELL_HEIGHT) ## Too lazy to implement properly
 screen = pg.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), pg.SCALED, vsync=1) # i mean, i'll leave function references to this variable, but really it can just be constant.
 
+bg1 = pg.transform.scale(pg.image.load("images/bg1.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg2 = pg.transform.scale(pg.image.load("images/bg2.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg3 = pg.transform.scale(pg.image.load("images/bg3.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg4 = pg.transform.scale(pg.image.load("images/bg4.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg5 = pg.transform.scale(pg.image.load("images/bg5.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
 
 class Progression():
     def __init__(self):
