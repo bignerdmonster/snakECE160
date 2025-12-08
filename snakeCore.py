@@ -11,12 +11,15 @@ CELL_HEIGHT = SCREEN_HEIGHT // ROW_COUNT ## #honestly who cares if they're squar
 CELL_DIMS = (CELL_LENGTH, CELL_HEIGHT) ## Too lazy to implement properly
 screen = pg.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), pg.SCALED, vsync=1) # i mean, i'll leave function references to this variable, but really it can just be constant.
 
-bg1 = pg.transform.scale(pg.image.load("images/bg1.png").convert_alpha(),CELL_DIMS)
-bg3 = pg.transform.scale(pg.image.load("images/bg3.png").convert_alpha(),CELL_DIMS)
-bg4 = pg.transform.scale(pg.image.load("images/bg4.png").convert_alpha(),CELL_DIMS)
-bg5 = pg.transform.scale(pg.image.load("images/bg5.png").convert_alpha(),CELL_DIMS)
-appleImg = pg.transform.scale(pg.image.load("images/apple.png").convert_alpha(),CELL_DIMS)
-goldAppleImg = pg.transform.scale(pg.image.load("images/golden_apple.png").convert_alpha(),CELL_DIMS)
+bg1 = pg.transform.scale(pg.image.load("images/bg1.png").convert_alpha(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg2 = pg.transform.scale(pg.image.load("images/bg2.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg3 = pg.transform.scale(pg.image.load("images/bg3.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg4 = pg.transform.scale(pg.image.load("images/bg4.png").convert_alpha(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg5 = pg.transform.scale(pg.image.load("images/bg5.png").convert_alpha(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+
+apple_img = pg.transform.scale(pg.image.load("images/apple.png").convert_alpha(), (CELL_LENGTH, CELL_HEIGHT))
+goldAppleImg = pg.transform.scale(pg.image.load("images/golden_apple.png").convert_alpha(), (CELL_LENGTH, CELL_HEIGHT))
+poison_apple_img = pg.transform.scale(pg.image.load("images/poison_apple.png").convert_alpha(), (CELL_LENGTH, CELL_HEIGHT))
 ramMeme = pg.transform.scale(pg.image.load("media/ramprice.PNG").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
 
 class Progression():
@@ -177,12 +180,39 @@ class SnakeTail(GameObject):
 
     def collide(self, snake):
         print("Achilles' stage manager should throw something out for this")
+        run = False
+        restartGame(snake, clock)
         self.color = 'blue'
 
     @classmethod
     def Sever(cls):
         GameObject.objList.remove(cls.tailList.pop())
 
+def restartGame(snake, clock):
+    pg.mixer.music.pause()
+
+    gameover = pg.mixer.Sound('images/game-over.mp3')
+    gameover.play()
+
+    GameOverScreen(screen, clock, win_h=SCREEN_HEIGHT, win_w=SCREEN_WIDTH).run()
+
+    pg.mixer.music.unpause()
+
+    snake.pos = [COLUMN_COUNT // 2, ROW_COUNT // 2, 0]
+    snake.rect[0] = snake.pos[0] * CELL_LENGTH
+    snake.rect[1] = snake.pos[1] * CELL_HEIGHT
+    snake.len = 1
+    snake.direction = pg.Vector3(1, 0, 0)
+
+    SnakeTail.tailList.clear()
+
+
+    GameObject.objList = [snake]
+    Apple.Reset()
+    GoldenApple.Reset()
+    PoisonApple.Reset()
+    PopUps.Reset()
+    Apple()
 
 
 #funny fnaf music box
@@ -242,39 +272,136 @@ class PopUps(GameObject):
             PopUps()
         super().render(screenV)
         
-
+###ghj
 class Apple(GameObject):
     def __init__(self,pos=None):
         super().__init__(pos or [random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)])
-        self.color = (255,0,0)
+        self.image = apple_img  # attach image to this apple
+
+    def render(self, screenV):
+        screenV.blit(self.image, self.rect)  # draw image instead of rect
 
     def collide(self, snake):
+        crunch = pg.mixer.Sound('images/crunch.mp3')
+        crunch.play()
         snake.len += 1
         GameObject.objList.remove(self)
         Apple()
+        # 10% chance to spawn golden apple
+        if random.random() < 0.1:
+            GoldenApple()
+                
+        # 33% chance to spawn poison apple
+        if random.random() < 0.33:
+            PoisonApple()
+
+class GoldenApple(GameObject):
+    def __init__(self,pos=None):
+        super().__init__(pos or [random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)])
+        self.image = goldAppleImg
+
+    def render(self, screenV):
+        screenV.blit(self.image, self.rect)
+
+    def collide(self, snake):
+        powerup = pg.mixer.Sound('images/coin-pickup.mp3')
+        powerup.play()
+        #coin-pickup.mp3
+        snake.len += 2
+        GameObject.objList.remove(self)
+        
+
+        # 10% chance another golden spawns after eating
+        if random.random() < 0.2:
+            GoldenApple()
+
+class PoisonApple(GameObject):
+    def __init__(self, pos=None):
+        super().__init__(pos or [random.randint(0, COLUMN_COUNT-1), random.randint(0, ROW_COUNT-1)])
+        self.image = poison_apple_img
+
+    def render(self, screenV):
+        screenV.blit(self.image, self.rect)
+
+    def collide(self, snake):
+        snake.len = max(1, snake.len - 1)
+
+        if SnakeTail.tailList:
+            tail_piece = SnakeTail.tailList.pop()
+            if tail_piece in GameObject.objList:
+                GameObject.objList.remove(tail_piece)
+
+        if self in GameObject.objList:
+            GameObject.objList.remove(self)
+
+        oof = pg.mixer.Sound('images/roblox-death-sound_1.mp3')
+        oof.play()
+
+        if random.random() < 0.2:
+            PoisonApple()
 
 
 print("line 161") ## this will stay here forever, as a memory to days long gone
+def drawGrid(surface):
+    for x in range(0, SCREEN_WIDTH, CELL_LENGTH):
+        pg.draw.line(surface, (0, 0, 0, 40), (x, 0), (x, SCREEN_HEIGHT))
 
+    for y in range(0, SCREEN_HEIGHT, CELL_HEIGHT):
+        pg.draw.line(surface, (0, 0, 0, 40), (0, y), (SCREEN_WIDTH, y))
 
 SNAKE_EVENT = pg.USEREVENT + 1
 pg.time.set_timer(SNAKE_EVENT, 67) # every 1 s, the snake allegedly moves.
 
 print("Starting")
-
+effect = pg.mixer.Sound('images/game-start.mp3')
+effect.play()
 
 def snakeGame(menu, snake, progress): ## this is the actual main game loop function!! yay
+    best_score = 0
     run = True
-    
+    pg.mixer.music.load('images/background-music.mp3')
+    pg.mixer.music.play(-1)
     while run:
         progress.check(snake.len)
-        screen.blit(bg3, (0, 0))
-        
+        if snake.len < 5:
+            screen.blit(bg1, (0, 0))
+        elif snake.len < 10:
+            screen.blit(bg2, (0, 0))
+        elif snake.len < 15:
+            screen.blit(bg3, (0, 0))
+        elif snake.len < 20:
+            screen.blit(bg4, (0, 0))
+        else:
+            screen.blit(bg5, (0, 0))
+
+        drawGrid(screen)
+        font = pg.font.SysFont(None, 36)
+        if snake.len > best_score:
+            best_score = snake.len
+
+        score_str = "Score: " + str(snake.len)
+        best_str = "Best Score: " + str(best_score)
+
+        outline_color = (255, 255, 255)
+        offsets = [(-1,0), (1,0), (0,-1), (0,1)]
+
+        for ox, oy in offsets:
+            screen.blit(font.render(score_str, True, outline_color), (5+ox, 10+oy))
+            screen.blit(font.render(best_str, True, outline_color), (5+ox, 50+oy))
+
+        score_text = font.render(score_str, True, (0,0,0))
+        best_text = font.render(best_str, True, (0,0,0))
+
+        screen.blit(score_text, (5, 10))
+        screen.blit(best_text, (5, 50))
+
         keysPressed = pg.key.get_pressed()
+
 
         if keysPressed[pg.K_ESCAPE]: ## this is up here to break before anything else
             run = False
             nextMenu = 1 # 1 for Pause menu
+            pg.mixer.music.pause()
 
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -308,10 +435,8 @@ def snakeGame(menu, snake, progress): ## this is the actual main game loop funct
 
         if keysPressed[pg.K_g]:
             run = False
-            GameOverScreen(screen, clock, win_h=SCREEN_HEIGHT, win_w=SCREEN_WIDTH).run()
-
-            snake.pos = [1, SCREEN_HEIGHT/10, SCREEN_WIDTH/10]
-            snake.len = 0
+            restartGame(snake, clock)
+            
 
         GameObject.Render(screen)
         pg.display.flip()

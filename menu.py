@@ -67,7 +67,7 @@ class Menu:
             self.screen.blit(label, label.get_rect(center=(self.win_w//2, 240 + self.lines.index(line) * 40)))
             
     def _draw_main(self):
-        title = self.title_font.render("snake", True, TEXT)
+        title = self.title_font.render("S n a k e !", True, TEXT)
         self.screen.blit(title, title.get_rect(center=(self.win_w//2, self.win_h//2 - 120)))
 
 

@@ -53,7 +53,7 @@ class GameOverScreen:
         self.screen.fill(BG)
 
         # Game Over title
-        title = self.title_font.render("Game Over", True, TEXT)
+        title = self.title_font.render("G A M E   O V E R !", True, TEXT)
         self.screen.blit(title, title.get_rect(center=(self.win_w // 2, self.win_h // 2 - 150)))
 
         # Buttons
