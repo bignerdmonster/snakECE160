@@ -5,18 +5,19 @@ from pause import GameOverScreen
 
 pg.init() #strict typing
 SCREEN_WIDTH, SCREEN_HEIGHT = 720, 720 ## IDEAL
-COLUMN_COUNT, ROW_COUNT = 41, 41 ## disgustingly out of fn. scope
-#logic to figure out square height & stuff
-CELL_LENGTH = SCREEN_WIDTH // COLUMN_COUNT
+COLUMN_COUNT, ROW_COUNT = 41, 41 
+CELL_LENGTH = SCREEN_WIDTH // COLUMN_COUNT ## logic to figure out cell height -- causes that weird skipping anyways
 CELL_HEIGHT = SCREEN_HEIGHT // ROW_COUNT ## #honestly who cares if they're square.
 CELL_DIMS = (CELL_LENGTH, CELL_HEIGHT) ## Too lazy to implement properly
 screen = pg.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), pg.SCALED, vsync=1) # i mean, i'll leave function references to this variable, but really it can just be constant.
 
-bg1 = pg.transform.scale(pg.image.load("images/bg1.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
-bg2 = pg.transform.scale(pg.image.load("images/bg2.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
-bg3 = pg.transform.scale(pg.image.load("images/bg3.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
-bg4 = pg.transform.scale(pg.image.load("images/bg4.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
-bg5 = pg.transform.scale(pg.image.load("images/bg5.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg1 = pg.transform.scale(pg.image.load("images/bg1.png").convert_alpha(),CELL_DIMS)
+bg3 = pg.transform.scale(pg.image.load("images/bg3.png").convert_alpha(),CELL_DIMS)
+bg4 = pg.transform.scale(pg.image.load("images/bg4.png").convert_alpha(),CELL_DIMS)
+bg5 = pg.transform.scale(pg.image.load("images/bg5.png").convert_alpha(),CELL_DIMS)
+appleImg = pg.transform.scale(pg.image.load("images/apple.png").convert_alpha(),CELL_DIMS)
+goldAppleImg = pg.transform.scale(pg.image.load("images/golden_apple.png").convert_alpha(),CELL_DIMS)
+ramMeme = pg.transform.scale(pg.image.load("media/ramprice.PNG").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
 
 class Progression():
     def __init__(self):
@@ -248,17 +249,8 @@ class Apple(GameObject):
         self.color = (255,0,0)
 
     def collide(self, snake):
-        print(snake.len)
         snake.len += 1
-        print (snake.len)
-        print("ran") ## heeeyyyy copilot, how you doin? ## love you long time ##ok thanks man. can you help explain why the Apple isn't being removed from the objList, and why another Apple isn't being spawned? thanks xoxo 
-        ## sure thing buddy! looks like in the collide method of the Apple class, you're removing the Apple instance from the GameObject.objList and then creating a new Apple instance. this should work as intended. however, if you're experiencing issues, it might be due to how the collision detection is set up or how the GameObject.objList is being managed elsewhere in your code. make sure that the collision detection is correctly identifying when the snake collides with the apple, and that there are no other parts of your code that might be interfering with the objList. if everything seems correct, you might want to add some debug prints to verify that the collide method is being called as expected. let me know if you need further assistance!
-        ## so, the print("ran") shows up, meaning the collide method is being called. but the apple isn't being removed from the objList, nor is a new apple being spawned. any ideas? 
-        # ## hmm, if the print statement is showing up, that means the collide method is indeed being called. one possibility is that there might be multiple instances of the Apple class in the GameObject.objList, and the one being removed isn't the one that's actually colliding with the snake. to verify this, you could add a debug print statement right before removing the apple to print out the current objList and see if the apple instance is actually present there. another thing to check is whether there are any other parts of your code that might be re-adding the apple back into the objList after it's been removed. if you still can't figure it out, feel free to share more of your code or any additional context, and i'll do my best to help you debug it!
-        ## thanks my clanka ## no problem buddy, happy to help! good luck with your coding! xoxo
-        print(GameObject.objList.count(self))
         GameObject.objList.remove(self)
-        print(GameObject.objList.count(any), "new 2")
         Apple()
 
 
@@ -270,14 +262,13 @@ pg.time.set_timer(SNAKE_EVENT, 67) # every 1 s, the snake allegedly moves.
 
 print("Starting")
 
-framerate = 60
-image = pg.transform.scale(pg.image.load("media/ramprice.PNG").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+
 def snakeGame(menu, snake, progress): ## this is the actual main game loop function!! yay
     run = True
     
     while run:
         progress.check(snake.len)
-        screen.blit(image, (0, 0))
+        screen.blit(bg3, (0, 0))
         
         keysPressed = pg.key.get_pressed()
 
