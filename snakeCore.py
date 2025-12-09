@@ -10,6 +10,13 @@ CELL_LENGTH = SCREEN_WIDTH // COLUMN_COUNT
 CELL_HEIGHT = SCREEN_HEIGHT // ROW_COUNT ## #honestly who cares if they're square.
 CELL_DIMS = (CELL_LENGTH, CELL_HEIGHT) ## Too lazy to implement properly
 
+def subclasses(cls): ## function for reset for GameObject class, allows for all subclasses to be reset neatly in one quick function
+    rome = set() # unordered, unique. disc math actually being useful for once but this means duplicates are ignored
+    for i in cls.__subclasses__():
+        rome.add(i) 
+        rome = rome.union(subclasses(i)) # add subclasses of those subclasses, and so on...
+    return rome # all roads...
+
 pg.init() # yeah.
 
 screen = pg.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), pg.SCALED | pg.RESIZABLE , vsync = 1) # i mean, i'll leave function references to this variable, but really it can just be constant.
@@ -31,7 +38,9 @@ game_over = pg.event.Event(GAMEOVER)
 pg.time.set_timer(SNAKE_EVENT, 67) 
 
 class Progression():
+    _instance = None # one progression
     def __init__(self):
+        Progression._instance = self
         self.lvls = {
             10: "popup",
             17: "music_box",
@@ -59,11 +68,11 @@ class Progression():
             return False
     @classmethod
     def Reset(cls):
-        for i in cls.lvls.values():
-            if i in cls.unlocked:
-                cls.unlocked.remove(i)
-            if i in cls.activated:
-                cls.activated.remove(i)
+        for i in cls._instance.lvls.values():
+            if i in cls._instance.unlocked:
+                cls._instance.unlocked.remove(i)
+            if i in cls._instance.activated:
+                cls._instance.activated.remove(i)
 
 class SnakeMat:
     def __init__(self, cols=15, rows=11):
@@ -109,7 +118,12 @@ class GameObject:
             #print(type(obj), obj)
             snake.collide(obj)
     @classmethod
-    def Reset(cls): ## works for each class extends GameObject (ex. Snake, Apple, PopUps, )
+    def Reset(cls): ## works for each class extends GameObject (ex. Snake, Apple, PopUps...)
+        if cls == GameObject:
+            for subclass in subclasses(cls):
+                subclass.Reset() # reset all subclasses of GameObject
+            cls.objList = [] # clear all objects
+            return # end
         for i in [x for x in GameObject.objList if type(x)==cls]:
             GameObject.objList.remove(i)
 
@@ -207,6 +221,7 @@ class SnakeTail(GameObject):
     @classmethod
     def Sever(cls):
         GameObject.objList.remove(cls.tailList.pop())
+    @classmethod
     def Reset(cls):
         cls.tailList = []
 
@@ -217,17 +232,16 @@ class musicBox(Clickable):
         self.rect.scale_by_ip(9,7)
         self.time = musicBox.maxTime
         self.color = pg.color.Color(0, 0, 255, 76)
-        #self.last_tick = pg.time.get_ticks() but in Clickable
+
     def render(self, screenV = screen):
-        #I need this to be translucent lmao
         current_time = pg.time.get_ticks()
         if (current_time - self.last_tick >= 1000) and not self.clicked():
-            self.time -= 60 ## tick down by a second, only when not clicked tho
+            self.time -= 60 ## tick down by a second, only when not clicked (looks nicer , even if it is slightly easier)
             self.last_tick = current_time
         super().render(screenV) # render box to screen
 
         text = font.render(f"Time: {self.time // 60}", True, (255, 255, 255))
-        screenV.blit(text, (self.rect.x + 10, self.rect.y + 15)) # render text to screen
+        screenV.blit(text, (self.rect.x + 10, self.rect.y + 15)) # render text to screen AFTER -- allows text to be on top
 
         if self.clicked() and self.time < musicBox.maxTime:
             self.time += 2 #sloow wind.         
@@ -236,21 +250,21 @@ class PopUps(Clickable):
     def __init__(self, pos=None):
         super().__init__((pos or [random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)]))
         self.color = popUpColor
-        self.rect.scale_by_ip(3.7,3.7)
-        self.timeScale = 600
+        self.rect.scale_by_ip(5.2,5.2)
+        self.timeScale = 5000
 
     def render(self, screenV=screen):
         if pg.time.get_ticks() - self.last_tick >= self.timeScale:
-            self.rect.scale_by_ip(1.2, 1.2)
+            self.rect.scale_by_ip(1.1, 1.1) # bigger box!
             self.last_tick = pg.time.get_ticks()
-            self.timeScale //= 1.2
-            if self.timeScale == 1:
+            self.timeScale //= 1.2 ## ensures that the popup gets bigger faster and faster if not resolved
+            if self.timeScale == 1: ## when you can't get any bigger, you're too big to fail! or smth
                 GameObject.objList.remove(self)
                 for i in [x for x in GameObject.objList if type(x) == Snake]:
                     i.len = 1 #the Fool
         if self.clicked():
             GameObject.objList.remove(self)
-            PopUps()
+            PopUps() # can never escape.
         super().render(screenV)
         
 class QTE(GameObject):
@@ -262,25 +276,25 @@ class Apple(GameObject):
         rand = random.random()
         if rand < 0.01:
             PoisonApple(pos)
-            return
+            return # 1% chance of poison apple
         elif rand < 0.02:
             GoldenApple(pos)
-            return
+            return # 1% chance of golden apple
         super().__init__(pos or [random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)])
         self.color = (255,0,0)
 
     def collide(self, snake):
         snake.len += 1
         GameObject.objList.remove(self)
-        Apple()
+        Apple() # all of this code is self explanatory, please...
 
 class GoldenApple(Apple):
     def __init__(self,pos=None):
         super().__init__(pos)
-        self.color = (255,215,0)
+        self.color = (255,215,0) # apple but gold
     def collide(self,snake):
-        snake.len = math.floor(snake.len * 1.5)
-        super().collide(snake) #it's gold!
+        snake.len = math.floor(snake.len * 1.5) #apple but much, much better
+        super().collide(snake)
 
 class PoisonApple(Apple):
     def __init__(self,pos=None):
@@ -288,17 +302,9 @@ class PoisonApple(Apple):
         self.color = (250,0,127)
     def collide(self,snake):
         super().collide(snake)
-        snake.len = math.ceil((snake.len * 0.75)) ## does this even work?
+        snake.len -= (snake.len // 3) # not convinced this works
+    
 ## print("line 161") ## this will stay here forever, as a memory to days long gone -- but it won't be ran anymore
-def gameover(): # lazy gameover function.
-    Apple.Reset()
-    Snake.Reset()
-    GoldenApple.Reset()
-    PoisonApple.Reset()
-    PopUps.Reset()
-    musicBox.Reset()
-    Apple()
-
 def snakeGame(menu, snake, progress): ## this is the actual main game loop function!! yay
     run = True
     
@@ -327,10 +333,11 @@ def snakeGame(menu, snake, progress): ## this is the actual main game loop funct
                 snake.move() # then move snake afterwards.
             if event.type == GAMEOVER:
                 GameObject.Reset()
-                gameover()
+                Progression.Reset()
                 gos = GameOverScreen(screen=screen, clock=clock, win_h=SCREEN_HEIGHT, win_w=SCREEN_WIDTH, finalLength=snake.len)
                 gos.run()
                 run = False
+                Apple() # reset apple
         if keysPressed[pg.K_ESCAPE]:
             run = False # goes to next menu, outside of the SNAKE_EVENT tracker because I want to be able to quit/pause at any time, as compared to whenever the snake moves.
         
