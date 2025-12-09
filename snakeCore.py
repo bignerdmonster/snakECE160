@@ -14,10 +14,10 @@ pg.init() # yeah.
 
 screen = pg.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), pg.SCALED | pg.RESIZABLE , vsync = 1) # i mean, i'll leave function references to this variable, but really it can just be constant.
 
-bg1 = pg.transform.scale(pg.image.load("images/bg1.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
-bg2 = pg.transform.scale(pg.image.load("images/bg3.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
-bg3 = pg.transform.scale(pg.image.load("images/bg4.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
-bg4 = pg.transform.scale(pg.image.load("images/bg5.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg5 = pg.transform.scale(pg.image.load("images/bg5.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg2 = pg.transform.scale(pg.image.load("images/bg2.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg3 = pg.transform.scale(pg.image.load("images/bg3.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg4 = pg.transform.scale(pg.image.load("images/bg4.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
 apple_img = pg.transform.scale(pg.image.load("images/apple.png").convert_alpha(), (CELL_LENGTH, CELL_HEIGHT))
 golden_apple_img = pg.transform.scale(pg.image.load("images/golden_apple.png"), (CELL_LENGTH, CELL_HEIGHT))
 
@@ -271,6 +271,7 @@ class QTE(Clickable):
 
         if elapsed >= self.max:
             self.active = False
+            print("QTE failed")
             pg.event.post(game_over)
             return False
 
@@ -331,12 +332,24 @@ def gameover(): # lazy gameover function.
     Apple()
     QTE().Reset()
 
+def bgSwitch(length):
+    if length < 10:
+        screen.fill('black')
+    elif length < 20:
+        screen.blit(bg2, (0,0))
+    elif length < 30:
+        screen.blit(bg5, (0,0))
+    elif length < 40:
+        screen.blit(bg4, (0,0))
+    else:
+        screen.blit(bg3, (0,0))
+
 def snakeGame(menu, snake, progress): ## this is the actual main game loop function!! yay
     run = True
     current_qte = None
     while run:
         progress.check(snake.len)
-        screen.fill('black')
+        bgSwitch(snake.len)
         keysPressed = pg.key.get_pressed()
 
         if keysPressed[pg.K_ESCAPE]: ## this is up here to break before anything else
@@ -360,7 +373,7 @@ def snakeGame(menu, snake, progress): ## this is the actual main game loop funct
                     if not current_qte.update(snake):
                         GameObject.objList.remove(current_qte)
                         current_qte = None
-                if current_qte is None and random.randint(0, 60) < 1:
+                if current_qte is None and random.randint(0, 299) < 1:
                     current_qte = QTE()
             if event.type == GAMEOVER:
                 GameObject.Reset()
