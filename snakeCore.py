@@ -34,6 +34,7 @@ class Progression():
     def __init__(self):
         self.lvls = {
             10: "popup",
+            3: "QTE",
             17: "music_box",
             25: "popup",
         }
@@ -252,10 +253,40 @@ class PopUps(Clickable):
             GameObject.objList.remove(self)
             PopUps()
         super().render(screenV)
-        
-class QTE(GameObject):
-    def __init__(self, pos=None):
-        super().__init__(pos or  [random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)])
+
+class QTE(Clickable):
+    def __init__(self, pos=None, key=pg.K_SPACE, duration=1500):
+        super().__init__(pos or [random.randint((COLUMN_COUNT//10), COLUMN_COUNT - (COLUMN_COUNT//10)), random.randint((ROW_COUNT//10), ROW_COUNT - (ROW_COUNT//10))])
+        self.color = (0, 200, 255)
+        self.key = key
+        self.max = duration
+        self.duration = duration
+        self.start_time = pg.time.get_ticks()
+        self.active = True
+        self.success = False
+
+    def update(self, snake):
+        current_time = pg.time.get_ticks()
+        elapsed = current_time - self.start_time
+
+        if elapsed >= self.max:
+            self.active = False
+            pg.event.post(game_over)
+            return False
+
+        # Check for successful key press
+        if pg.key.get_pressed()[self.key]:
+            self.success = True
+            self.active = False
+            return False
+
+        return True
+
+    def render(self, screenV=screen):
+        super().render(screenV)
+        txt = font.render(f"PRESS SPACE! {pg.time.get_ticks() - self.start_time}", True, (255, 255, 255), )
+        screenV.blit(txt, (self.rect.x + 5, self.rect.y + 5))
+
 
 class Apple(GameObject):
     def __init__(self,pos=None):
@@ -298,10 +329,11 @@ def gameover(): # lazy gameover function.
     PopUps.Reset()
     musicBox.Reset()
     Apple()
+    QTE()
 
 def snakeGame(menu, snake, progress): ## this is the actual main game loop function!! yay
     run = True
-    
+    current_qte = None
     while run:
         progress.check(snake.len)
         screen.fill('black')
@@ -310,7 +342,6 @@ def snakeGame(menu, snake, progress): ## this is the actual main game loop funct
         if keysPressed[pg.K_ESCAPE]: ## this is up here to break before anything else
             run = False
             nextMenu = 1 # 1 for Pause menu
-
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit() # GET OUT!!!!
@@ -325,6 +356,12 @@ def snakeGame(menu, snake, progress): ## this is the actual main game loop funct
                 if keysPressed[pg.K_RETURN]:
                     Apple() # make apple.
                 snake.move() # then move snake afterwards.
+                if current_qte is not None:
+                    if not current_qte.update(snake):
+                        GameObject.objList.remove(current_qte)
+                        current_qte = None
+                if current_qte is None and random.randint(0, 60) < 1:
+                    current_qte = QTE()
             if event.type == GAMEOVER:
                 GameObject.Reset()
                 gameover()
