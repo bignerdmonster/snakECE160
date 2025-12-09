@@ -94,6 +94,9 @@ class GameObject:
             GameObject.objList.remove(i)
 
 class Clickable(GameObject):
+    def __init__(self, pos=None):
+        super().__init__(pos)
+        self.last_tick = pg.time.get_ticks()
     def clicked(self):
         return self.rect.collidepoint(pg.mouse.get_pos()) and (pg.mouse.get_pressed())[0]
 
@@ -194,7 +197,7 @@ class musicBox(Clickable):
         self.rect.scale_by_ip(9,7)
         self.time = musicBox.maxTime
         self.color = pg.color.Color(0, 0, 255, 76)
-        self.last_tick = pg.time.get_ticks()
+        #self.last_tick = pg.time.get_ticks() but in Clickable
     def render(self, screenV = screen):
         #I need this to be translucent lmao
         current_time = pg.time.get_ticks()
@@ -215,8 +218,13 @@ class PopUps(Clickable):
         super().__init__((pos or [random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)]))
         self.color = popUpColor
         self.rect.scale_by_ip(3.7,3.7)
+        self.timeScale = 5000
 
     def render(self, screenV=screen):
+        if pg.time.get_ticks() - self.last_tick >= self.timeScale:
+            self.rect.scale_by_ip(1.2, 1.2)
+            self.last_tick = pg.time.get_ticks()
+            self.timeScale //= 1.2
         if self.clicked():
             GameObject.objList.remove(self)
             PopUps()
