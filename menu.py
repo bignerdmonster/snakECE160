@@ -202,12 +202,12 @@ class Menu:
             self.clock.tick(60)
 
 class GameOverScreen:
-    def __init__(self, screen, clock, score=None, win_w=1080, win_h=720):
+    def __init__(self, screen, clock, len=None, win_w=1080, win_h=720, *args, **kwargs):
         self.screen = screen
         self.clock = clock
         self.win_w = win_w
         self.win_h = win_h
-        self.score = score
+        self.score = len
 
         self.running = True
 
@@ -283,7 +283,6 @@ class GameOverScreen:
                 score_label.get_rect(center=(self.win_w // 2 + offset_x, self.win_h // 2 - 80 + offset_y))
             )
 
-        self.retry_btn.draw(self.screen)
         self.menu_btn.draw(self.screen)
         self.quit_btn.draw(self.screen)
 
@@ -293,15 +292,11 @@ class GameOverScreen:
             return "quit_game"
 
         if event.type == pg.KEYDOWN:
-            if event.key == pg.K_r:
-                return "retry"
-            elif event.key == pg.K_RETURN:
+            if event.key == pg.K_RETURN:
                 return "main_menu"
             elif event.key == pg.K_ESCAPE:
                 return "quit_game"
 
-        if self.retry_btn.clicked(event):
-            return "retry"
         if self.menu_btn.clicked(event):
             return "main_menu"
         if self.quit_btn.clicked(event):

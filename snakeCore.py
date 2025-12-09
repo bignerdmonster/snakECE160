@@ -1,28 +1,41 @@
 import pygame as pg
 import random, math
-from menu import Menu
+from menu import Menu, GameOverScreen
 
-pg.init() #strict typing
+framerate = 60 # independent of snake movement, ensures smoothish gameplay
 SCREEN_WIDTH, SCREEN_HEIGHT = 1080, 1080 ## IDEAL
 COLUMN_COUNT, ROW_COUNT = 61, 61 ## disgustingly out of fn. scope
 #logic to figure out square height & stuff
 CELL_LENGTH = SCREEN_WIDTH // COLUMN_COUNT
 CELL_HEIGHT = SCREEN_HEIGHT // ROW_COUNT ## #honestly who cares if they're square.
 CELL_DIMS = (CELL_LENGTH, CELL_HEIGHT) ## Too lazy to implement properly
+
+pg.init() # yeah.
+
 screen = pg.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), pg.SCALED | pg.RESIZABLE , vsync = 1) # i mean, i'll leave function references to this variable, but really it can just be constant.
 
-SNAKE_EVENT = pg.USEREVENT + 1
-pg.time.set_timer(SNAKE_EVENT, 67) # snake movement timer
+bg1 = pg.transform.scale(pg.image.load("images/bg1.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg2 = pg.transform.scale(pg.image.load("images/bg3.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg3 = pg.transform.scale(pg.image.load("images/bg4.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg4 = pg.transform.scale(pg.image.load("images/bg5.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+apple_img = pg.transform.scale(pg.image.load("images/apple.png").convert_alpha(), (CELL_LENGTH, CELL_HEIGHT))
+golden_apple_img = pg.transform.scale(pg.image.load("images/golden_apple.png"), (CELL_LENGTH, CELL_HEIGHT))
 
-framerate = 60 # independent of snake movement, ens
-font = pg.font.SysFont('arial', 36)
+font = pg.font.Font('media/billo.ttf', 36)
 popUpColor = pg.color.Color(255,255,255,67)
+
+# pygame event system beginnings
+SNAKE_EVENT = pg.event.custom_type()
+GAMEOVER = pg.event.custom_type()
+game_over = pg.event.Event(GAMEOVER)
+pg.time.set_timer(SNAKE_EVENT, 67) 
 
 class Progression():
     def __init__(self):
         self.lvls = {
-            3: "popup",
-            5: "music_box"
+            10: "popup",
+            17: "music_box",
+            25: "popup",
         }
         self.unlocked = []
         self.activated = []
@@ -44,6 +57,13 @@ class Progression():
             return True
         else:
             return False
+    @classmethod
+    def Reset(cls):
+        for i in cls.lvls.values():
+            if i in cls.unlocked:
+                cls.unlocked.remove(i)
+            if i in cls.activated:
+                cls.activated.remove(i)
 
 class SnakeMat:
     def __init__(self, cols=15, rows=11):
@@ -59,7 +79,6 @@ class SnakeMat:
         return retStr.strip()
     # i am dizzy. i will rest now. (ai told me to rest, i am "OBEYING" LAUGHING MY ASS OFF WTF) ### jacinthe's battle theme is REALLY good. 
 
-
 class GameObject:
     objList = []
     def __init__(self, pos): ## how it feels to lazily assign pos to an actual strict value. idc.
@@ -70,19 +89,20 @@ class GameObject:
         self.pos = pos if pos else [0, 0] #yeah
         self.pos.append(0) if len(self.pos) == 2 else 0 ## 3d coordinates, from base.
         self.color = 'magenta' #if anything is magenta colored, that means it has been setup invalidly. warning color.
-        self.rect = pg.rect.Rect(CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT)
+        self.rect = pg.rect.Rect(CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT) # rect anchored to cell Q2 corner, with dimensions of a single cell.
+
     def render(self, screenV=screen):
-        #print(self.color)
         pg.draw.rect(screenV, self.color, self.rect)
     
     def collide(self, snake):
-        print(self.__class__, "collided with snake!")
+        pass # default collision means nothing
 
 
     @classmethod
     def Render(cls, screenV=screen):
         for obj in cls.objList:
             obj.render(screenV) #and we're back to the team flare noveau theme being so goated...
+    
     @classmethod
     def Collide(cls, snake):
         for obj in [x for x in cls.objList if x != snake]:
@@ -109,6 +129,7 @@ class Snake(GameObject):
         return cls._instance
         # ai code over
     def __init__(self, sMat, **args): #PLEASE pass custompos as a 3 val array if it is being used.
+        self.sMat = sMat ## reset. lazy. oh well.
         initpos = sMat.center[:] if (not ('startPos' in args)) else args['startPos']
         super().__init__(initpos) #sets self.pos
         self.cols,self.rows = sMat.cols, sMat.rows # begrudging.
@@ -132,9 +153,6 @@ class Snake(GameObject):
             self.left = pg.K_a
             self.right = pg.K_d
             self.interact = pg.K_e
-        
-
-        
 
     def futurePos(self):
         ##  basically, this returns coordinates. It's the movement function, but doesn't update the movement 
@@ -154,8 +172,7 @@ class Snake(GameObject):
         while len(SnakeTail.tailList) > self.len: # needs to be while, for all the times when i trim the snake more than 1 unit
 
             SnakeTail.Sever() ## remove tail if array is bigger than length
-            ## todo: figure out triple collision!?!?!? update: it doesn't matter, we just can ignore it for now
-        
+            ## todo: figure out triple collision!?!?!? update: it doesn't matter, we just can ignore it for now -- update -- we're leaving it like that
         if self.specialFlags.get("debugPrint", False): # we can actaully adapt this system for like a boost or whatever.
             Apple.Reset()
             self.specialFlags["debugPrint"] = False # since inputs are processed 24/7, this allows a certain action to be queued, then happen when the snake moves. Works well!
@@ -173,6 +190,10 @@ class Snake(GameObject):
             self.specialFlags["debugPrint"] = True # removed length increase cuz jank, did i mess up array?
         else:
             pass # I think this is needed... try check
+    
+    @classmethod
+    def Reset(cls):
+        cls._instance.__init__(cls._instance.sMat)
 
 class SnakeTail(GameObject):
     tailList = []
@@ -181,16 +202,14 @@ class SnakeTail(GameObject):
         self.color = 'yellow'
 
     def collide(self, snake):
-        print("Achilles' stage manager should throw something out for this")
-        self.color = 'blue'
+        pg.event.post(game_over)
 
     @classmethod
     def Sever(cls):
         GameObject.objList.remove(cls.tailList.pop())
+    def Reset(cls):
+        cls.tailList = []
 
-
-
-#funny music box
 class musicBox(Clickable):
     maxTime = 1200
     def __init__(self, pos=[((COLUMN_COUNT//2)+(COLUMN_COUNT//4)),((ROW_COUNT//2)+(ROW_COUNT//4)),0]):
@@ -211,8 +230,7 @@ class musicBox(Clickable):
         screenV.blit(text, (self.rect.x + 10, self.rect.y + 15)) # render text to screen
 
         if self.clicked() and self.time < musicBox.maxTime:
-            self.time += 2 #sloow wind. 
-        
+            self.time += 2 #sloow wind.         
 
 class PopUps(Clickable):
     def __init__(self, pos=None):
@@ -239,15 +257,14 @@ class QTE(GameObject):
     def __init__(self, pos=None):
         super().__init__(pos or  [random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)])
 
-
 class Apple(GameObject):
     def __init__(self,pos=None):
         rand = random.random()
-        if rand < 0.05:
-            GoldenApple(pos)
-            return
-        elif rand > 0.95:
+        if rand < 0.01:
             PoisonApple(pos)
+            return
+        elif rand < 0.02:
+            GoldenApple(pos)
             return
         super().__init__(pos or [random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)])
         self.color = (255,0,0)
@@ -273,9 +290,14 @@ class PoisonApple(Apple):
         super().collide(snake)
         snake.len = math.ceil((snake.len * 0.75)) ## does this even work?
 ## print("line 161") ## this will stay here forever, as a memory to days long gone -- but it won't be ran anymore
-
-
-
+def gameover(): # lazy gameover function.
+    Apple.Reset()
+    Snake.Reset()
+    GoldenApple.Reset()
+    PoisonApple.Reset()
+    PopUps.Reset()
+    musicBox.Reset()
+    Apple()
 
 def snakeGame(menu, snake, progress): ## this is the actual main game loop function!! yay
     run = True
@@ -291,49 +313,42 @@ def snakeGame(menu, snake, progress): ## this is the actual main game loop funct
 
         for event in pg.event.get():
             if event.type == pg.QUIT:
-                pg.quit()
+                pg.quit() # GET OUT!!!!
                 exit(0)
             if event.type == SNAKE_EVENT:
-                GameObject.Collide(snake) #check collision first
-
-                snake.move() #main aaaaalogic, operating one time per second. right now just moving.
-                # musicBox.tick()
-
-                if keysPressed[pg.K_RETURN]:
-                    #print(GameObject.objList)
-                    Apple() # make apple.
-                    
+                GameObject.Collide(snake) # collide objects with snake before moving it
+                ## create objects
                 if progress.contain("popup"):
                     PopUps()
                 if progress.contain("music_box"):
                     musicBox()
+                if keysPressed[pg.K_RETURN]:
+                    Apple() # make apple.
+                snake.move() # then move snake afterwards.
+            if event.type == GAMEOVER:
+                GameObject.Reset()
+                gameover()
+                gos = GameOverScreen(screen=screen, clock=clock, win_h=SCREEN_HEIGHT, win_w=SCREEN_WIDTH, finalLength=snake.len)
+                gos.run()
+                run = False
         if keysPressed[pg.K_ESCAPE]:
-            run = False
-            nextMenu = 1 # 1 for Pause menu
-        snake.steer(keysPressed)
-
+            run = False # goes to next menu, outside of the SNAKE_EVENT tracker because I want to be able to quit/pause at any time, as compared to whenever the snake moves.
+        
+        snake.steer(keysPressed) # alter the snake movement vector based on keypresses. 
         GameObject.Render(screen) # to be clear, renders all game objects.
-        pg.display.flip()
-        clock.tick()
+        pg.display.flip() # update screen!
+        clock.tick(framerate) # limit framerate to framerate
     menu.notstop = True
-    print("ho")
-
-
-
-
 
 if __name__ == "__main__":
-    
-    mainMat = SnakeMat(COLUMN_COUNT,ROW_COUNT)
-    mainSnake = Snake(mainMat)
-    Apple()
-    clock = pg.time.Clock()
-
-    framerate = 60
-    mainMenu = Menu(screenInp=screen, clocked=clock,win_h=SCREEN_HEIGHT,win_w=SCREEN_WIDTH) #testing w/ start-game = none
-    while True:
-        mainMenu.run()
-        snakeGame(mainMenu,mainSnake, Progression())
-    
+    while True:    
+        mainMat = SnakeMat(COLUMN_COUNT,ROW_COUNT)
+        mainSnake = Snake(mainMat)
+        Apple()
+        clock = pg.time.Clock()
+        mainMenu = Menu(screenInp=screen, clocked=clock,win_h=SCREEN_HEIGHT,win_w=SCREEN_WIDTH)
+        while True:
+            mainMenu.run()
+            snakeGame(mainMenu,mainSnake, Progression())
 else:
-    print("snakeCore imported, or YOU SHOULD RUN THIS WITH python3 snakeCore.py")
+    print("snakeCore imported -- this should NOT happen")
