@@ -120,8 +120,9 @@ class GameObject:
     @classmethod
     def Reset(cls): ## works for each class extends GameObject (ex. Snake, Apple, PopUps...)
         if cls == GameObject:
-            for subclass in subclasses(cls):
+            for subclass in [x for x in subclasses(cls) if x != Snake]:
                 subclass.Reset() # reset all subclasses of GameObject
+            ##Snake.Reset() # for priority?
             cls.objList = [] # clear all objects
             return # end
         for i in [x for x in GameObject.objList if type(x)==cls]:
