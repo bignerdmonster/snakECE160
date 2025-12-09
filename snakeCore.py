@@ -258,14 +258,14 @@ class QTE(Clickable):
     def __init__(self, pos=None, key=pg.K_SPACE, duration=1500):
         super().__init__(pos or [random.randint((COLUMN_COUNT//10), COLUMN_COUNT - (COLUMN_COUNT//10)), random.randint((ROW_COUNT//10), ROW_COUNT - (ROW_COUNT//10))])
         self.color = (0, 200, 255)
+        self.rect.scale_by_ip(6, 10)
         self.key = key
         self.max = duration
         self.duration = duration
         self.start_time = pg.time.get_ticks()
-        self.active = True
-        self.success = False
 
-    def update(self, snake):
+
+    def render(self, screenV=screen):
         current_time = pg.time.get_ticks()
         elapsed = current_time - self.start_time
 
@@ -277,15 +277,13 @@ class QTE(Clickable):
 
         # Check for successful key press
         if pg.key.get_pressed()[self.key]:
-            self.success = True
-            self.active = False
-            return False
-
-        return True
-
-    def render(self, screenV=screen):
+            GameObject.objList.remove(self)
+            print("QTE success")
+            self = None ## uh
+            return
+        
         super().render(screenV)
-        txt = font.render(f"PRESS SPACE! {pg.time.get_ticks() - self.start_time}", True, (255, 255, 255), )
+        txt = font.render(f"PRESS SPACE! {elapsed}", True, (255, 255, 255), )
         screenV.blit(txt, (self.rect.x + 5, self.rect.y + 5))
 
 
@@ -369,11 +367,7 @@ def snakeGame(menu, snake, progress): ## this is the actual main game loop funct
                 if keysPressed[pg.K_RETURN]:
                     Apple() # make apple.
                 snake.move() # then move snake afterwards.
-                if current_qte is not None:
-                    if not current_qte.update(snake):
-                        GameObject.objList.remove(current_qte)
-                        current_qte = None
-                if current_qte is None and random.randint(0, 299) < 1:
+                if current_qte is None and random.randint(0, 2) < 1:
                     current_qte = QTE()
             if event.type == GAMEOVER:
                 GameObject.Reset()
