@@ -228,16 +228,16 @@ class PopUps(GameObject):
         self.collideRect = pg.Rect(self.rect[0],self.rect[1],self.rect[2],self.rect[3])
         self.clicked = False
 
-class QTE(GameObject):
-    def __init__(self, pos=None):
-        super().__init__(pos or  [random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)])
-
     def render(self, screenV=screen):
         if self.collideRect.collidepoint(pg.mouse.get_pos()) and (pg.mouse.get_pressed())[0]:
             GameObject.objList.remove(self)
             PopUps()
         super().render(screenV)
         
+class QTE(GameObject):
+    def __init__(self, pos=None):
+        super().__init__(pos or  [random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)])
+
 
 class Apple(GameObject):
     def __init__(self,pos=None):
