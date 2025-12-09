@@ -3,7 +3,7 @@ import random, math
 from menu import Menu, GameOverScreen
 
 framerate = 60 # independent of snake movement, ensures smoothish gameplay
-SCREEN_WIDTH, SCREEN_HEIGHT = 1080, 1080 ## IDEAL
+SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080 ## IDEAL
 COLUMN_COUNT, ROW_COUNT = 61, 61 ## disgustingly out of fn. scope
 #logic to figure out square height & stuff
 CELL_LENGTH = SCREEN_WIDTH // COLUMN_COUNT
