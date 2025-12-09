@@ -31,7 +31,9 @@ game_over = pg.event.Event(GAMEOVER)
 pg.time.set_timer(SNAKE_EVENT, 67) 
 
 class Progression():
+    _instance = None
     def __init__(self):
+        Progression._instance = self
         self.lvls = {
             10: "popup",
             3: "QTE",
@@ -60,11 +62,7 @@ class Progression():
             return False
     @classmethod
     def Reset(cls):
-        for i in cls.lvls.values():
-            if i in cls.unlocked:
-                cls.unlocked.remove(i)
-            if i in cls.activated:
-                cls.activated.remove(i)
+        cls._instance.__init__()
 
 class SnakeMat:
     def __init__(self, cols=15, rows=11):
@@ -238,7 +236,7 @@ class PopUps(Clickable):
         super().__init__((pos or [random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)]))
         self.color = popUpColor
         self.rect.scale_by_ip(3.7,3.7)
-        self.timeScale = 600
+        self.timeScale = 5000
 
     def render(self, screenV=screen):
         if pg.time.get_ticks() - self.last_tick >= self.timeScale:
@@ -255,10 +253,12 @@ class PopUps(Clickable):
         super().render(screenV)
 
 class QTE(Clickable):
-    def __init__(self, pos=None, key=pg.K_SPACE, duration=1500):
+    _instance = None
+    def __init__(self, pos=None, key=pg.K_SPACE, duration=2400):
+        QTE._instance = self
         super().__init__(pos or [random.randint((COLUMN_COUNT//10), COLUMN_COUNT - (COLUMN_COUNT//10)), random.randint((ROW_COUNT//10), ROW_COUNT - (ROW_COUNT//10))])
         self.color = (0, 200, 255)
-        self.rect.scale_by_ip(6, 10)
+        self.rect.scale_by_ip(17, 4)
         self.key = key
         self.max = duration
         self.duration = duration
@@ -278,8 +278,8 @@ class QTE(Clickable):
         # Check for successful key press
         if pg.key.get_pressed()[self.key]:
             GameObject.objList.remove(self)
+            QTE._instance = None ## required for respawn enable
             print("QTE success")
-            self = None ## uh
             return
         
         super().render(screenV)
@@ -344,7 +344,6 @@ def bgSwitch(length):
 
 def snakeGame(menu, snake, progress): ## this is the actual main game loop function!! yay
     run = True
-    current_qte = None
     while run:
         progress.check(snake.len)
         bgSwitch(snake.len)
@@ -367,8 +366,8 @@ def snakeGame(menu, snake, progress): ## this is the actual main game loop funct
                 if keysPressed[pg.K_RETURN]:
                     Apple() # make apple.
                 snake.move() # then move snake afterwards.
-                if current_qte is None and random.randint(0, 2) < 1:
-                    current_qte = QTE()
+                if (random.randint(0, 120) < 1) and (not QTE._instance) and ("QTE" in progress.unlocked): # 33% chance to spawn a QTE if one is not active
+                        QTE()
             if event.type == GAMEOVER:
                 GameObject.Reset()
                 gameover()
