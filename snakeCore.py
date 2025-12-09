@@ -219,7 +219,7 @@ class PopUps(Clickable):
         super().__init__((pos or [random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)]))
         self.color = popUpColor
         self.rect.scale_by(4,4)
-
+    
     def render(self, screenV=screen):
         if self.clicked():
             GameObject.objList.remove(self)
