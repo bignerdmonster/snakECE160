@@ -9,10 +9,10 @@ COLUMN_COUNT, ROW_COUNT = 41, 41 ## disgustingly out of fn. scope
 CELL_LENGTH = SCREEN_WIDTH // COLUMN_COUNT
 CELL_HEIGHT = SCREEN_HEIGHT // ROW_COUNT ## #honestly who cares if they're square.
 CELL_DIMS = (CELL_LENGTH, CELL_HEIGHT) ## Too lazy to implement properly
-screen = pg.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), pg.SCALED, vsync=1) # i mean, i'll leave function references to this variable, but really it can just be constant.
+screen = pg.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), pg.SCALED | pg.RESIZABLE , vsync = 1) # i mean, i'll leave function references to this variable, but really it can just be constant.
 
 
-font = pg.font.SysFont('jokerman', 36)
+font = pg.font.SysFont('papyrus', 36)
 popUpColor = pg.color.Color(255,255,255,67)
 
 class Progression():
@@ -60,7 +60,7 @@ class SnakeMat:
 class GameObject:
     objList = []
     def __init__(self, pos): ## how it feels to lazily assign pos to an actual strict value. idc.
-        if type(self) != PopUps:
+        if type(self) not in (PopUps, musicBox):
             GameObject.objList.insert(0, self)
         else:
             GameObject.objList.append(self) ## popup needs to render last, and we can guarentee that by adding it into the last
@@ -90,7 +90,9 @@ class GameObject:
         for i in [x for x in GameObject.objList if type(x)==cls]:
             GameObject.objList.remove(i)
 
-
+class Clickable(GameObject):
+    def clicked(self):
+        return self.rect.collidepoint(pg.mouse.get_pos()) and (pg.mouse.get_pressed())[0]
 
 class Snake(GameObject):
     _instance = None ## ok frankly this was done by ai. I have YET to understand this chunk, but it will come soon.
@@ -130,7 +132,7 @@ class Snake(GameObject):
     def futurePos(self):
         ##  basically, this returns coordinates. It's the movement function, but doesn't update the movement 
         return [((self.pos[0] + int(self.direction.x)) % self.cols),
-                ((self.pos[1] + int(self.direction.y)) % ROW_COUNT),
+                ((self.pos[1] + int(self.direction.y)) % self.rows),
                 (self.pos[2] + int(self.direction.z))]
     
     def collide(self, obj):
@@ -179,9 +181,7 @@ class SnakeTail(GameObject):
     def Sever(cls):
         GameObject.objList.remove(cls.tailList.pop())
 
-class Clickable(GameObject):
-    def clicked(self):
-        return self.rect.collidepoint(pg.mouse.get_pos()) and (pg.mouse.get_pressed())[0]
+
 
 #funny music box
 class musicBox(Clickable):
@@ -195,31 +195,24 @@ class musicBox(Clickable):
     def render(self, screenV = screen):
         #I need this to be translucent lmao
         current_time = pg.time.get_ticks()
-        if current_time - self.last_tick >= 1000:
-            self.time -= 60
+        if (current_time - self.last_tick >= 1000) and not self.clicked():
+            self.time -= 60 ## tick down by a second, only when not clicked tho
             self.last_tick = current_time
-        super().render(screenV)
+        super().render(screenV) # render box to screen
 
-        # timer, if timer hit 0 they die idk
-        
         text = font.render(f"Time: {self.time // 60}", True, (255, 255, 255))
-        screenV.blit(text, (self.rect.x + 10, self.rect.y + 10))
-
-        #handles if they're winding it
+        screenV.blit(text, (self.rect.x + 10, self.rect.y + 15)) # render text to screen
 
         if self.clicked() and self.time < musicBox.maxTime:
-            if current_time - self.last_tick >= 1000:
-                if self.time + 60 <= musicBox.maxTime:
-                    self.time += 60
-                else:
-                    self.time = musicBox.maxTime
+            self.time += 2 #sloow wind. 
+        
 
 class PopUps(Clickable):
     def __init__(self, pos=None):
         super().__init__((pos or [random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)]))
         self.color = popUpColor
-        self.rect.scale_by(4,4)
-    
+        self.rect.scale_by_ip(3.7,3.7)
+
     def render(self, screenV=screen):
         if self.clicked():
             GameObject.objList.remove(self)
