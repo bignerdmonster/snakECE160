@@ -248,7 +248,7 @@ class Apple(GameObject):
         super().__init__(pos or [random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)])
         self.color = (255,0,0)
 
-    def collide(self, snake):
+    def collide(self, snake):   
         snake.len += 1
         GameObject.objList.remove(self)
         Apple()
