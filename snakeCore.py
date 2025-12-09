@@ -335,7 +335,7 @@ if __name__ == "__main__":
     mainMenu = Menu(screenInp=screen, clocked=clock,win_h=SCREEN_HEIGHT,win_w=SCREEN_WIDTH) #testing w/ start-game = none
     while True:
         mainMenu.run()
-        snakeGame(mainMenu,mainSnake, Progression())
+        snakeGame(mainMenu,mainSnake, Progression())    
     
 else:
     print("snakeCore imported, or YOU SHOULD RUN THIS WITH python3 snakeCore.py")
