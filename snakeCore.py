@@ -1,29 +1,41 @@
 import pygame as pg
-import random
-from menu import Menu
-from pause import GameOverScreen
+import random, math
+from menu import Menu, GameOverScreen
 
-pg.init() #strict typing
-SCREEN_WIDTH, SCREEN_HEIGHT = 720, 720 ## IDEAL
-COLUMN_COUNT, ROW_COUNT = 41, 41 
-CELL_LENGTH = SCREEN_WIDTH // COLUMN_COUNT ## logic to figure out cell height -- causes that weird skipping anyways
+framerate = 60 # independent of snake movement, ensures smoothish gameplay
+SCREEN_WIDTH, SCREEN_HEIGHT = 1080, 1080 ## IDEAL
+COLUMN_COUNT, ROW_COUNT = 61, 61 ## disgustingly out of fn. scope
+#logic to figure out square height & stuff
+CELL_LENGTH = SCREEN_WIDTH // COLUMN_COUNT
 CELL_HEIGHT = SCREEN_HEIGHT // ROW_COUNT ## #honestly who cares if they're square.
 CELL_DIMS = (CELL_LENGTH, CELL_HEIGHT) ## Too lazy to implement properly
-screen = pg.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), pg.SCALED, vsync=1) # i mean, i'll leave function references to this variable, but really it can just be constant.
 
-bg1 = pg.transform.scale(pg.image.load("images/bg1.png").convert_alpha(),CELL_DIMS)
-bg3 = pg.transform.scale(pg.image.load("images/bg3.png").convert_alpha(),CELL_DIMS)
-bg4 = pg.transform.scale(pg.image.load("images/bg4.png").convert_alpha(),CELL_DIMS)
-bg5 = pg.transform.scale(pg.image.load("images/bg5.png").convert_alpha(),CELL_DIMS)
-appleImg = pg.transform.scale(pg.image.load("images/apple.png").convert_alpha(),CELL_DIMS)
-goldAppleImg = pg.transform.scale(pg.image.load("images/golden_apple.png").convert_alpha(),CELL_DIMS)
-ramMeme = pg.transform.scale(pg.image.load("media/ramprice.PNG").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+pg.init() # yeah.
+
+screen = pg.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), pg.SCALED | pg.RESIZABLE , vsync = 1) # i mean, i'll leave function references to this variable, but really it can just be constant.
+
+bg1 = pg.transform.scale(pg.image.load("images/bg1.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg2 = pg.transform.scale(pg.image.load("images/bg3.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg3 = pg.transform.scale(pg.image.load("images/bg4.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+bg4 = pg.transform.scale(pg.image.load("images/bg5.png").convert(),(SCREEN_WIDTH, SCREEN_HEIGHT))
+apple_img = pg.transform.scale(pg.image.load("images/apple.png").convert_alpha(), (CELL_LENGTH, CELL_HEIGHT))
+golden_apple_img = pg.transform.scale(pg.image.load("images/golden_apple.png"), (CELL_LENGTH, CELL_HEIGHT))
+
+font = pg.font.Font('media/billo.ttf', 36)
+popUpColor = pg.color.Color(255,255,255,67)
+
+# pygame event system beginnings
+SNAKE_EVENT = pg.event.custom_type()
+GAMEOVER = pg.event.custom_type()
+game_over = pg.event.Event(GAMEOVER)
+pg.time.set_timer(SNAKE_EVENT, 67) 
 
 class Progression():
     def __init__(self):
         self.lvls = {
-            3: "popup",
-            5: "music_box"
+            10: "popup",
+            17: "music_box",
+            25: "popup",
         }
         self.unlocked = []
         self.activated = []
@@ -45,6 +57,13 @@ class Progression():
             return True
         else:
             return False
+    @classmethod
+    def Reset(cls):
+        for i in cls.lvls.values():
+            if i in cls.unlocked:
+                cls.unlocked.remove(i)
+            if i in cls.activated:
+                cls.activated.remove(i)
 
 class SnakeMat:
     def __init__(self, cols=15, rows=11):
@@ -60,30 +79,30 @@ class SnakeMat:
         return retStr.strip()
     # i am dizzy. i will rest now. (ai told me to rest, i am "OBEYING" LAUGHING MY ASS OFF WTF) ### jacinthe's battle theme is REALLY good. 
 
-
 class GameObject:
     objList = []
     def __init__(self, pos): ## how it feels to lazily assign pos to an actual strict value. idc.
-        if type(self) != PopUps:
+        if type(self) not in (PopUps, musicBox):
             GameObject.objList.insert(0, self)
         else:
             GameObject.objList.append(self) ## popup needs to render last, and we can guarentee that by adding it into the last
         self.pos = pos if pos else [0, 0] #yeah
-        self.pos.append(0) if len(self.pos) == 2 else 1 ## 3d coordinates, from base.
+        self.pos.append(0) if len(self.pos) == 2 else 0 ## 3d coordinates, from base.
         self.color = 'magenta' #if anything is magenta colored, that means it has been setup invalidly. warning color.
-        self.rect = [CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT]
+        self.rect = pg.rect.Rect(CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT) # rect anchored to cell Q2 corner, with dimensions of a single cell.
+
     def render(self, screenV=screen):
-        #print(self.color)
         pg.draw.rect(screenV, self.color, self.rect)
     
     def collide(self, snake):
-        print(self.__class__, "collided with snake!")
+        pass # default collision means nothing
 
 
     @classmethod
     def Render(cls, screenV=screen):
         for obj in cls.objList:
             obj.render(screenV) #and we're back to the team flare noveau theme being so goated...
+    
     @classmethod
     def Collide(cls, snake):
         for obj in [x for x in cls.objList if x != snake]:
@@ -94,7 +113,12 @@ class GameObject:
         for i in [x for x in GameObject.objList if type(x)==cls]:
             GameObject.objList.remove(i)
 
-
+class Clickable(GameObject):
+    def __init__(self, pos=None):
+        super().__init__(pos)
+        self.last_tick = pg.time.get_ticks()
+    def clicked(self):
+        return self.rect.collidepoint(pg.mouse.get_pos()) and (pg.mouse.get_pressed())[0]
 
 class Snake(GameObject):
     _instance = None ## ok frankly this was done by ai. I have YET to understand this chunk, but it will come soon.
@@ -105,10 +129,12 @@ class Snake(GameObject):
         return cls._instance
         # ai code over
     def __init__(self, sMat, **args): #PLEASE pass custompos as a 3 val array if it is being used.
+        self.sMat = sMat ## reset. lazy. oh well.
         initpos = sMat.center[:] if (not ('startPos' in args)) else args['startPos']
         super().__init__(initpos) #sets self.pos
         self.cols,self.rows = sMat.cols, sMat.rows # begrudging.
         self.color = 'green'
+        self.len = 1 ##  inital length!!! very immportant
 
         self.direction = pg.Vector3(1,0,0) # three-dimensional movement possibilites. also start by moving right to avoid self collision at beginning
         self.specialFlags = {} # for custom controls-ish
@@ -127,14 +153,11 @@ class Snake(GameObject):
             self.left = pg.K_a
             self.right = pg.K_d
             self.interact = pg.K_e
-        
-
-        self.len = 1  # length of snake; used to determine when to pop tail
 
     def futurePos(self):
         ##  basically, this returns coordinates. It's the movement function, but doesn't update the movement 
         return [((self.pos[0] + int(self.direction.x)) % self.cols),
-                ((self.pos[1] + int(self.direction.y)) % ROW_COUNT),
+                ((self.pos[1] + int(self.direction.y)) % self.rows),
                 (self.pos[2] + int(self.direction.z))]
     
     def collide(self, obj):
@@ -146,11 +169,10 @@ class Snake(GameObject):
         self.pos = self.futurePos()[:]
         self.rect[0], self.rect[1] = (CELL_LENGTH*self.pos[0]), (CELL_HEIGHT*self.pos[1])#rect updater
         SnakeTail.tailList.insert(0, SnakeTail(self.pos[:])) ## insert the new head position at the start of the list
-        if len(SnakeTail.tailList) > self.len:
+        while len(SnakeTail.tailList) > self.len: # needs to be while, for all the times when i trim the snake more than 1 unit
 
             SnakeTail.Sever() ## remove tail if array is bigger than length
-            ## todo: figure out triple collision!?!?!? update: it doesn't matter, we just can ignore it for now
-        
+            ## todo: figure out triple collision!?!?!? update: it doesn't matter, we just can ignore it for now -- update -- we're leaving it like that
         if self.specialFlags.get("debugPrint", False): # we can actaully adapt this system for like a boost or whatever.
             Apple.Reset()
             self.specialFlags["debugPrint"] = False # since inputs are processed 24/7, this allows a certain action to be queued, then happen when the snake moves. Works well!
@@ -168,6 +190,10 @@ class Snake(GameObject):
             self.specialFlags["debugPrint"] = True # removed length increase cuz jank, did i mess up array?
         else:
             pass # I think this is needed... try check
+    
+    @classmethod
+    def Reset(cls):
+        cls._instance.__init__(cls._instance.sMat)
 
 class SnakeTail(GameObject):
     tailList = []
@@ -176,100 +202,109 @@ class SnakeTail(GameObject):
         self.color = 'yellow'
 
     def collide(self, snake):
-        print("Achilles' stage manager should throw something out for this")
-        self.color = 'blue'
+        pg.event.post(game_over)
 
     @classmethod
     def Sever(cls):
         GameObject.objList.remove(cls.tailList.pop())
+    def Reset(cls):
+        cls.tailList = []
 
-
-
-#funny fnaf music box
-class musicBox():
-    def __init__(self, time = 450):
-        self.maxtime = time
-        self.time = time
-        self.mB = pg.Rect(random.randint(200, SCREEN_WIDTH - 200), random.randint(200, SCREEN_HEIGHT - 200), 150, 150)
-        self.color = (0, 0, 255, 76)
-        self.last_tick = pg.time.get_ticks()
-    def explode(self):
-        return self.time < 0
-    def holding(self):
-        # uh it ticked way too fast before so I'm using get_ticks to track time
-        current_time = pg.time.get_ticks()
-        if self.time < self.maxtime:
-            if current_time - self.last_tick >= 100:
-                self.time += 60
-                self.last_tick = current_time
-            if self.time > self.maxtime:
-                self.time -= abs(self.time - self.maxtime)
-    def tick(self):
-        #uh it ticked way too fast before so I'm using get_ticks to track time
-        current_time = pg.time.get_ticks()
-        if current_time - self.last_tick >= 1000:
-            self.time -= 60
-            self.last_tick = current_time
+class musicBox(Clickable):
+    maxTime = 1200
+    def __init__(self, pos=[((COLUMN_COUNT//2)+(COLUMN_COUNT//4)),((ROW_COUNT//2)+(ROW_COUNT//4)),0]):
+        super().__init__(pos)
+        self.rect.scale_by_ip(9,7)
+        self.time = musicBox.maxTime
+        self.color = pg.color.Color(0, 0, 255, 76)
+        #self.last_tick = pg.time.get_ticks() but in Clickable
     def render(self, screenV = screen):
         #I need this to be translucent lmao
-        surf = pg.Surface((150, 150), pg.SRCALPHA)
-        surf.fill(self.color)
-        screenV.blit(surf, self.mB)
+        current_time = pg.time.get_ticks()
+        if (current_time - self.last_tick >= 1000) and not self.clicked():
+            self.time -= 60 ## tick down by a second, only when not clicked tho
+            self.last_tick = current_time
+        super().render(screenV) # render box to screen
 
-        # timer, if timer hit 0 they die idk
-        font = pg.font.Font(None, 36)
         text = font.render(f"Time: {self.time // 60}", True, (255, 255, 255))
-        screenV.blit(text, (self.mB.x + 10, self.mB.y + 10))
+        screenV.blit(text, (self.rect.x + 10, self.rect.y + 15)) # render text to screen
 
-        #handles if they're winding it
+        if self.clicked() and self.time < musicBox.maxTime:
+            self.time += 2 #sloow wind.         
 
-        if self.mB.collidepoint(pg.mouse.get_pos()) and ((pg.mouse.get_pressed())[0]):
-            self.holding() #adds 2 secs to da timer
-
-class PopUps(GameObject):
+class PopUps(Clickable):
     def __init__(self, pos=None):
         super().__init__((pos or [random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)]))
-        self.color = (255,255,255, 0.67)
-        self.rect[2] *= 16 # gross, but nessecary
-        self.rect[3] *= 16
-        self.collideRect = pg.Rect(self.rect[0],self.rect[1],self.rect[2],self.rect[3])
-        self.clicked = False
-
+        self.color = popUpColor
+        self.rect.scale_by_ip(3.7,3.7)
+        self.timeScale = 600
 
     def render(self, screenV=screen):
-        if self.collideRect.collidepoint(pg.mouse.get_pos()) and (pg.mouse.get_pressed())[0]:
+        if pg.time.get_ticks() - self.last_tick >= self.timeScale:
+            self.rect.scale_by_ip(1.2, 1.2)
+            self.last_tick = pg.time.get_ticks()
+            self.timeScale //= 1.2
+            if self.timeScale == 1:
+                GameObject.objList.remove(self)
+                for i in [x for x in GameObject.objList if type(x) == Snake]:
+                    i.len = 1 #the Fool
+        if self.clicked():
             GameObject.objList.remove(self)
             PopUps()
         super().render(screenV)
         
+class QTE(GameObject):
+    def __init__(self, pos=None):
+        super().__init__(pos or  [random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)])
 
 class Apple(GameObject):
     def __init__(self,pos=None):
+        rand = random.random()
+        if rand < 0.01:
+            PoisonApple(pos)
+            return
+        elif rand < 0.02:
+            GoldenApple(pos)
+            return
         super().__init__(pos or [random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)])
         self.color = (255,0,0)
 
-    def collide(self, snake):   
+    def collide(self, snake):
         snake.len += 1
         GameObject.objList.remove(self)
         Apple()
 
+class GoldenApple(Apple):
+    def __init__(self,pos=None):
+        super().__init__(pos)
+        self.color = (255,215,0)
+    def collide(self,snake):
+        snake.len = math.floor(snake.len * 1.5)
+        super().collide(snake) #it's gold!
 
-print("line 161") ## this will stay here forever, as a memory to days long gone
-
-
-SNAKE_EVENT = pg.USEREVENT + 1
-pg.time.set_timer(SNAKE_EVENT, 67) # every 1 s, the snake allegedly moves.
-
-print("Starting")
-
+class PoisonApple(Apple):
+    def __init__(self,pos=None):
+        super().__init__(pos)
+        self.color = (250,0,127)
+    def collide(self,snake):
+        super().collide(snake)
+        snake.len = math.ceil((snake.len * 0.75)) ## does this even work?
+## print("line 161") ## this will stay here forever, as a memory to days long gone -- but it won't be ran anymore
+def gameover(): # lazy gameover function.
+    Apple.Reset()
+    Snake.Reset()
+    GoldenApple.Reset()
+    PoisonApple.Reset()
+    PopUps.Reset()
+    musicBox.Reset()
+    Apple()
 
 def snakeGame(menu, snake, progress): ## this is the actual main game loop function!! yay
     run = True
     
     while run:
         progress.check(snake.len)
-        screen.blit(bg3, (0, 0))
-        
+        screen.fill('black')
         keysPressed = pg.key.get_pressed()
 
         if keysPressed[pg.K_ESCAPE]: ## this is up here to break before anything else
@@ -278,64 +313,42 @@ def snakeGame(menu, snake, progress): ## this is the actual main game loop funct
 
         for event in pg.event.get():
             if event.type == pg.QUIT:
-                pg.quit()
+                pg.quit() # GET OUT!!!!
                 exit(0)
             if event.type == SNAKE_EVENT:
-                GameObject.Collide(snake) #check collision first
-
-                snake.move() #main aaaaalogic, operating one time per second. right now just moving.
-                # musicBox.tick()
-
-                if keysPressed[pg.K_RETURN]:
-                    #print(GameObject.objList)
-                    Apple() # make apple.
-                    
+                GameObject.Collide(snake) # collide objects with snake before moving it
+                ## create objects
                 if progress.contain("popup"):
                     PopUps()
-
+                if progress.contain("music_box"):
+                    musicBox()
+                if keysPressed[pg.K_RETURN]:
+                    Apple() # make apple.
+                snake.move() # then move snake afterwards.
+            if event.type == GAMEOVER:
+                GameObject.Reset()
+                gameover()
+                gos = GameOverScreen(screen=screen, clock=clock, win_h=SCREEN_HEIGHT, win_w=SCREEN_WIDTH, finalLength=snake.len)
+                gos.run()
+                run = False
         if keysPressed[pg.K_ESCAPE]:
-            run = False
-            nextMenu = 1 # 1 for Pause menu
-        snake.steer(keysPressed)
-
+            run = False # goes to next menu, outside of the SNAKE_EVENT tracker because I want to be able to quit/pause at any time, as compared to whenever the snake moves.
+        
+        snake.steer(keysPressed) # alter the snake movement vector based on keypresses. 
         GameObject.Render(screen) # to be clear, renders all game objects.
-
-        #musicbox stuff
-        """musicBox.render(screen)
-        popup.render()
-        if musicBox.explode():
-            run = False"""
-
-        if keysPressed[pg.K_g]:
-            run = False
-            GameOverScreen(screen, clock, win_h=SCREEN_HEIGHT, win_w=SCREEN_WIDTH).run()
-
-            snake.pos = [1, SCREEN_HEIGHT/10, SCREEN_WIDTH/10]
-            snake.len = 0
-
-        GameObject.Render(screen)
-        pg.display.flip()
-        clock.tick()
+        pg.display.flip() # update screen!
+        clock.tick(framerate) # limit framerate to framerate
     menu.notstop = True
-    print("ho")
-
-
-
-
 
 if __name__ == "__main__":
-    
-    mainMat = SnakeMat(COLUMN_COUNT,ROW_COUNT)
-    mainSnake = Snake(mainMat)
-    Apple()
-    clock = pg.time.Clock()
-    musicBox = musicBox()
-
-    framerate = 60
-    mainMenu = Menu(screenInp=screen, clocked=clock,win_h=SCREEN_HEIGHT,win_w=SCREEN_WIDTH) #testing w/ start-game = none
-    while True:
-        mainMenu.run()
-        snakeGame(mainMenu,mainSnake, Progression())    
-    
+    while True:    
+        mainMat = SnakeMat(COLUMN_COUNT,ROW_COUNT)
+        mainSnake = Snake(mainMat)
+        Apple()
+        clock = pg.time.Clock()
+        mainMenu = Menu(screenInp=screen, clocked=clock,win_h=SCREEN_HEIGHT,win_w=SCREEN_WIDTH)
+        while True:
+            mainMenu.run()
+            snakeGame(mainMenu,mainSnake, Progression())
 else:
-    print("snakeCore imported, or YOU SHOULD RUN THIS WITH python3 snakeCore.py")
+    print("snakeCore imported -- this should NOT happen")
