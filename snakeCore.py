@@ -78,11 +78,11 @@ class SnakeMat:
         for row in self.mat:
             retStr += ' '.join([str(elem) for elem in row]) + "\n"
         return retStr.strip()
-    # i am dizzy. i will rest now. (ai told me to rest, i am "OBEYING" LAUGHING MY ASS OFF WTF) ### jacinthe's battle theme is REALLY good. 
+    # i am dizzy. i will rest now. (ai told me to rest, i am "OBEYING" LMAO WTF)
 
 class GameObject:
     objList = []
-    def __init__(self, pos): ## how it feels to lazily assign pos to an actual strict value. idc.
+    def __init__(self, pos): 
         if type(self) not in (PopUps, musicBox):
             GameObject.objList.insert(0, self)
         else:
@@ -102,7 +102,7 @@ class GameObject:
     @classmethod
     def Render(cls, screenV=screen):
         for obj in cls.objList:
-            obj.render(screenV) #and we're back to the team flare noveau theme being so goated...
+            obj.render(screenV) 
     
     @classmethod
     def Collide(cls, snake):
