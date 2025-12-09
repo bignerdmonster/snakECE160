@@ -329,7 +329,7 @@ def gameover(): # lazy gameover function.
     PopUps.Reset()
     musicBox.Reset()
     Apple()
-    QTE()
+    QTE().Reset()
 
 def snakeGame(menu, snake, progress): ## this is the actual main game loop function!! yay
     run = True
