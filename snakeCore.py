@@ -3,8 +3,8 @@ import random, math
 from menu import Menu
 
 pg.init() #strict typing
-SCREEN_WIDTH, SCREEN_HEIGHT = 720, 720 ## IDEAL
-COLUMN_COUNT, ROW_COUNT = 41, 41 ## disgustingly out of fn. scope
+SCREEN_WIDTH, SCREEN_HEIGHT = 1080, 1080 ## IDEAL
+COLUMN_COUNT, ROW_COUNT = 61, 61 ## disgustingly out of fn. scope
 #logic to figure out square height & stuff
 CELL_LENGTH = SCREEN_WIDTH // COLUMN_COUNT
 CELL_HEIGHT = SCREEN_HEIGHT // ROW_COUNT ## #honestly who cares if they're square.
@@ -113,6 +113,7 @@ class Snake(GameObject):
         super().__init__(initpos) #sets self.pos
         self.cols,self.rows = sMat.cols, sMat.rows # begrudging.
         self.color = 'green'
+        self.len = 1 ##  inital length!!! very immportant
 
         self.direction = pg.Vector3(1,0,0) # three-dimensional movement possibilites. also start by moving right to avoid self collision at beginning
         self.specialFlags = {} # for custom controls-ish
@@ -133,7 +134,7 @@ class Snake(GameObject):
             self.interact = pg.K_e
         
 
-        self.len = 1  # length of snake; used to determine when to pop tail
+        
 
     def futurePos(self):
         ##  basically, this returns coordinates. It's the movement function, but doesn't update the movement 
@@ -150,7 +151,7 @@ class Snake(GameObject):
         self.pos = self.futurePos()[:]
         self.rect[0], self.rect[1] = (CELL_LENGTH*self.pos[0]), (CELL_HEIGHT*self.pos[1])#rect updater
         SnakeTail.tailList.insert(0, SnakeTail(self.pos[:])) ## insert the new head position at the start of the list
-        if len(SnakeTail.tailList) > self.len:
+        while len(SnakeTail.tailList) > self.len: # needs to be while, for all the times when i trim the snake more than 1 unit
 
             SnakeTail.Sever() ## remove tail if array is bigger than length
             ## todo: figure out triple collision!?!?!? update: it doesn't matter, we just can ignore it for now
@@ -218,13 +219,17 @@ class PopUps(Clickable):
         super().__init__((pos or [random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)]))
         self.color = popUpColor
         self.rect.scale_by_ip(3.7,3.7)
-        self.timeScale = 5000
+        self.timeScale = 600
 
     def render(self, screenV=screen):
         if pg.time.get_ticks() - self.last_tick >= self.timeScale:
             self.rect.scale_by_ip(1.2, 1.2)
             self.last_tick = pg.time.get_ticks()
             self.timeScale //= 1.2
+            if self.timeScale == 1:
+                GameObject.objList.remove(self)
+                for i in [x for x in GameObject.objList if type(x) == Snake]:
+                    i.len = 1 #the Fool
         if self.clicked():
             GameObject.objList.remove(self)
             PopUps()
@@ -237,8 +242,12 @@ class QTE(GameObject):
 
 class Apple(GameObject):
     def __init__(self,pos=None):
-        if random.random() < 0.05:
-            GoldenApple(pos) ## 5% chance for colden apple
+        rand = random.random()
+        if rand < 0.05:
+            GoldenApple(pos)
+            return
+        elif rand > 0.95:
+            PoisonApple(pos)
             return
         super().__init__(pos or [random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)])
         self.color = (255,0,0)
@@ -256,6 +265,13 @@ class GoldenApple(Apple):
         snake.len = math.floor(snake.len * 1.5)
         super().collide(snake) #it's gold!
 
+class PoisonApple(Apple):
+    def __init__(self,pos=None):
+        super().__init__(pos)
+        self.color = (250,0,127)
+    def collide(self,snake):
+        super().collide(snake)
+        snake.len = math.ceil((snake.len * 0.75)) ## does this even work?
 ## print("line 161") ## this will stay here forever, as a memory to days long gone -- but it won't be ran anymore
 
 
