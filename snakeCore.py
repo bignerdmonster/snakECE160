@@ -12,11 +12,14 @@ CELL_DIMS = (CELL_LENGTH, CELL_HEIGHT) ## Too lazy to implement properly
 screen = pg.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), pg.SCALED, vsync=1) # i mean, i'll leave function references to this variable, but really it can just be constant.
 
 
+font = pg.font.SysFont('jokerman', 36)
+popUpColor = pg.color.Color(255,255,255,67)
+
 class Progression():
     def __init__(self):
         self.lvls = {
             3: "popup",
-            5: "music_box"
+            1: "music_box"
         }
         self.unlocked = []
         self.activated = []
@@ -62,9 +65,9 @@ class GameObject:
         else:
             GameObject.objList.append(self) ## popup needs to render last, and we can guarentee that by adding it into the last
         self.pos = pos if pos else [0, 0] #yeah
-        self.pos.append(0) if len(self.pos) == 2 else 1 ## 3d coordinates, from base.
+        self.pos.append(0) if len(self.pos) == 2 else 0 ## 3d coordinates, from base.
         self.color = 'magenta' #if anything is magenta colored, that means it has been setup invalidly. warning color.
-        self.rect = [CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT]
+        self.rect = pg.rect.Rect(CELL_LENGTH*self.pos[0], CELL_HEIGHT*self.pos[1], CELL_LENGTH, CELL_HEIGHT)
     def render(self, screenV=screen):
         #print(self.color)
         pg.draw.rect(screenV, self.color, self.rect)
@@ -176,60 +179,49 @@ class SnakeTail(GameObject):
     def Sever(cls):
         GameObject.objList.remove(cls.tailList.pop())
 
-
+class Clickable(GameObject):
+    def clicked(self):
+        return self.rect.collidepoint(pg.mouse.get_pos()) and (pg.mouse.get_pressed())[0]
 
 #funny music box
-class musicBox():
-    def __init__(self, time = 450):
-        self.maxtime = time
-        self.time = time
-        self.mB = pg.Rect(random.randint(200, SCREEN_WIDTH - 200), random.randint(200, SCREEN_HEIGHT - 200), 150, 150)
-        self.color = (0, 0, 255, 76)
+class musicBox(Clickable):
+    maxTime = 1200
+    def __init__(self, pos=[((COLUMN_COUNT//2)+(COLUMN_COUNT//4)),((ROW_COUNT//2)+(ROW_COUNT//4)),0]):
+        super().__init__(pos)
+        self.rect.scale_by_ip(9,7)
+        self.time = musicBox.maxTime
+        self.color = pg.color.Color(0, 0, 255, 76)
         self.last_tick = pg.time.get_ticks()
-    def explode(self):
-        return self.time < 0
-    def holding(self):
-        # uh it ticked way too fast before so I'm using get_ticks to track time
-        current_time = pg.time.get_ticks()
-        if self.time < self.maxtime:
-            if current_time - self.last_tick >= 100:
-                self.time += 60
-                self.last_tick = current_time
-            if self.time > self.maxtime:
-                self.time -= abs(self.time - self.maxtime)
-    def tick(self):
-        #uh it ticked way too fast before so I'm using get_ticks to track time
+    def render(self, screenV = screen):
+        #I need this to be translucent lmao
         current_time = pg.time.get_ticks()
         if current_time - self.last_tick >= 1000:
             self.time -= 60
             self.last_tick = current_time
-    def render(self, screenV = screen):
-        #I need this to be translucent lmao
-        surf = pg.Surface((150, 150), pg.SRCALPHA)
-        surf.fill(self.color)
-        screenV.blit(surf, self.mB)
+        super().render(screenV)
 
         # timer, if timer hit 0 they die idk
-        font = pg.font.Font(None, 36)
+        
         text = font.render(f"Time: {self.time // 60}", True, (255, 255, 255))
-        screenV.blit(text, (self.mB.x + 10, self.mB.y + 10))
+        screenV.blit(text, (self.rect.x + 10, self.rect.y + 10))
 
         #handles if they're winding it
 
-        if self.mB.collidepoint(pg.mouse.get_pos()) and ((pg.mouse.get_pressed())[0]):
-            self.holding() #adds 2 secs to da timer
+        if self.clicked() and self.time < musicBox.maxTime:
+            if current_time - self.last_tick >= 1000:
+                if self.time + 60 <= musicBox.maxTime:
+                    self.time += 60
+                else:
+                    self.time = musicBox.maxTime
 
-class PopUps(GameObject):
+class PopUps(Clickable):
     def __init__(self, pos=None):
         super().__init__((pos or [random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)]))
-        self.color = (255,255,255, 0.67)
-        self.rect[2] *= 16 # gross, but nessecary
-        self.rect[3] *= 16
-        self.collideRect = pg.Rect(self.rect[0],self.rect[1],self.rect[2],self.rect[3])
-        self.clicked = False
+        self.color = popUpColor
+        self.rect.scale_by(4,4)
 
     def render(self, screenV=screen):
-        if self.collideRect.collidepoint(pg.mouse.get_pos()) and (pg.mouse.get_pressed())[0]:
+        if self.clicked():
             GameObject.objList.remove(self)
             PopUps()
         super().render(screenV)
@@ -245,17 +237,8 @@ class Apple(GameObject):
         self.color = (255,0,0)
 
     def collide(self, snake):
-        print(snake.len)
         snake.len += 1
-        print (snake.len)
-        print("ran") ## heeeyyyy copilot, how you doin? ## love you long time ##ok thanks man. can you help explain why the Apple isn't being removed from the objList, and why another Apple isn't being spawned? thanks xoxo 
-        ## sure thing buddy! looks like in the collide method of the Apple class, you're removing the Apple instance from the GameObject.objList and then creating a new Apple instance. this should work as intended. however, if you're experiencing issues, it might be due to how the collision detection is set up or how the GameObject.objList is being managed elsewhere in your code. make sure that the collision detection is correctly identifying when the snake collides with the apple, and that there are no other parts of your code that might be interfering with the objList. if everything seems correct, you might want to add some debug prints to verify that the collide method is being called as expected. let me know if you need further assistance!
-        ## so, the print("ran") shows up, meaning the collide method is being called. but the apple isn't being removed from the objList, nor is a new apple being spawned. any ideas? 
-        # ## hmm, if the print statement is showing up, that means the collide method is indeed being called. one possibility is that there might be multiple instances of the Apple class in the GameObject.objList, and the one being removed isn't the one that's actually colliding with the snake. to verify this, you could add a debug print statement right before removing the apple to print out the current objList and see if the apple instance is actually present there. another thing to check is whether there are any other parts of your code that might be re-adding the apple back into the objList after it's been removed. if you still can't figure it out, feel free to share more of your code or any additional context, and i'll do my best to help you debug it!
-        ## thanks my clanka ## no problem buddy, happy to help! good luck with your coding! xoxo
-        print(GameObject.objList.count(self))
         GameObject.objList.remove(self)
-        print(GameObject.objList.count(any), "new 2")
         Apple()
 
 
@@ -298,22 +281,13 @@ def snakeGame(menu, snake, progress): ## this is the actual main game loop funct
                 if progress.contain("popup"):
                     PopUps()
                 if progress.contain("music_box"):
-                    mus = musicBox()
-                if "music_box" in progress.unlocked:
-                    mus.render(screen)
-                    mus.tick()
+                    musicBox()
         if keysPressed[pg.K_ESCAPE]:
             run = False
             nextMenu = 1 # 1 for Pause menu
         snake.steer(keysPressed)
 
         GameObject.Render(screen) # to be clear, renders all game objects.
-
-        #musicbox stuff
-        """musicBox.render(screen)
-        popup.render()
-        if musicBox.explode():
-            run = False"""
         pg.display.flip()
         clock.tick()
     menu.notstop = True
