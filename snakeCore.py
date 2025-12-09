@@ -1,5 +1,5 @@
 import pygame as pg
-import random
+import random, math
 from menu import Menu
 
 pg.init() #strict typing
@@ -11,15 +11,18 @@ CELL_HEIGHT = SCREEN_HEIGHT // ROW_COUNT ## #honestly who cares if they're squar
 CELL_DIMS = (CELL_LENGTH, CELL_HEIGHT) ## Too lazy to implement properly
 screen = pg.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), pg.SCALED | pg.RESIZABLE , vsync = 1) # i mean, i'll leave function references to this variable, but really it can just be constant.
 
+SNAKE_EVENT = pg.USEREVENT + 1
+pg.time.set_timer(SNAKE_EVENT, 67) # snake movement timer
 
-font = pg.font.SysFont('papyrus', 36)
+framerate = 60 # independent of snake movement, ens
+font = pg.font.SysFont('arial', 36)
 popUpColor = pg.color.Color(255,255,255,67)
 
 class Progression():
     def __init__(self):
         self.lvls = {
             3: "popup",
-            1: "music_box"
+            5: "music_box"
         }
         self.unlocked = []
         self.activated = []
@@ -226,6 +229,9 @@ class QTE(GameObject):
 
 class Apple(GameObject):
     def __init__(self,pos=None):
+        if random.random() < 0.05:
+            GoldenApple(pos) ## 5% chance for colden apple
+            return
         super().__init__(pos or [random.randint(0,COLUMN_COUNT-1),random.randint(0,ROW_COUNT-1)])
         self.color = (255,0,0)
 
@@ -234,16 +240,18 @@ class Apple(GameObject):
         GameObject.objList.remove(self)
         Apple()
 
+class GoldenApple(Apple):
+    def __init__(self,pos=None):
+        super().__init__(pos)
+        self.color = (255,215,0)
+    def collide(self,snake):
+        snake.len = math.floor(snake.len * 1.5)
+        super().collide(snake) #it's gold!
 
-print("line 161") ## this will stay here forever, as a memory to days long gone
+## print("line 161") ## this will stay here forever, as a memory to days long gone -- but it won't be ran anymore
 
 
-SNAKE_EVENT = pg.USEREVENT + 1
-pg.time.set_timer(SNAKE_EVENT, 67) # every 1 s, the snake allegedly moves.
 
-print("Starting")
-
-framerate = 60
 
 def snakeGame(menu, snake, progress): ## this is the actual main game loop function!! yay
     run = True
