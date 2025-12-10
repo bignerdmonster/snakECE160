@@ -20,7 +20,7 @@ class Button:
         if not pg.font.get_init():
             pg.font.init()
 
-        font = font or pg.font.SysFont(None, 36)
+        font = font or pg.font.Font("media/billo.TTF", 36)
         hovering = self.rect.collidepoint(pg.mouse.get_pos())
 
         shadow_rect = self.rect.copy()
@@ -57,9 +57,9 @@ class Menu:
         self.win_w = win_w
         self.win_h = win_h
 
-        self.title_font = pg.font.Font("media/billo.ttf", 110)
-        self.small_font = pg.font.SysFont(None, 30)
-        self.btn_font = pg.font.Font("media/billo.ttf", 36)
+        self.title_font = pg.font.Font("media/billo.TTF", 110)
+        self.small_font = pg.font.Font("media/billo.TTF", 30)
+        self.btn_font = pg.font.Font("media/billo.TTF", 36)
 
         self.play_btn = Button("Play - Enter", (self.win_w//2, self.win_h//2 + 40))
         self.howto_btn = Button("How to Play - H", (self.win_w//2, self.win_h//2 + 140))
@@ -78,8 +78,18 @@ class Menu:
         # Background snake
         self.snake_points = []
         self.snake_length = 60
-        self.snake_dir = pg.Vector2(2, 0)
-        self.snake_pos = pg.Vector2(-200, self.win_h // 2)
+        self.snake_dir = random.choice([
+            pg.Vector2(4, 0),
+            pg.Vector2(-4, 0),
+            pg.Vector2(0, 4),
+            pg.Vector2(0, -4)
+    ])
+
+        self.snake_pos = pg.Vector2(
+        random.randint(100, self.win_w - 100),
+        random.randint(100, self.win_h - 100)
+)
+
 
         # Animated Logo
         self.logo_hue = 0
@@ -99,6 +109,7 @@ class Menu:
             pg.draw.line(self.screen, (0, 0, 0, 35), (0, y), (self.win_w, y))
 
         self._draw_background_snake()
+
 
     def _draw_glow_title(self):
         self.logo_hue = (self.logo_hue + 1) % 255
@@ -165,26 +176,59 @@ class Menu:
         quit(0)
 
     def _draw_background_snake(self):
-        self.snake_pos += self.snake_dir
+        SPEED = 4
+        self.snake_pos += self.snake_dir * (SPEED / 8)
 
-        if self.snake_pos.x > self.win_w + 200:
-            self.snake_pos.x = -200
-            self.snake_pos.y = random.randint(100, self.win_h - 100)
+        if not hasattr(self, "turn_cooldown"):
+            self.turn_cooldown = 0
 
-        wave = math.sin(self.t * 0.08) * 40
+        if self.turn_cooldown > 0:
+            self.turn_cooldown -= 1
+        else:
+            if random.random() < 0.08:
+                possible_dirs = [
+                    pg.Vector2(8, 0),
+                    pg.Vector2(-8, 0),
+                    pg.Vector2(0, 8),
+                    pg.Vector2(0, -8)
+                ]
 
-        self.snake_points.insert(0, (self.snake_pos.x, self.snake_pos.y + wave))
+                reverse = -self.snake_dir
+                valid_dirs = [d for d in possible_dirs if d != reverse]
+
+                if valid_dirs:
+                    self.snake_dir = random.choice(valid_dirs)
+                    self.turn_cooldown = 8
+
+        if self.snake_pos.x < 0:
+            self.snake_pos.x = self.win_w
+        if self.snake_pos.x > self.win_w:
+            self.snake_pos.x = 0
+        if self.snake_pos.y < 0:
+            self.snake_pos.y = self.win_h
+        if self.snake_pos.y > self.win_h:
+            self.snake_pos.y = 0
+
+        self.snake_points.insert(0, (int(self.snake_pos.x), int(self.snake_pos.y)))
         if len(self.snake_points) > self.snake_length:
             self.snake_points.pop()
 
-        for i, p in enumerate(self.snake_points):
-            size = max(2, 8 - i // 6)
+        BLOCK_SIZE = 12
 
-        # ✅ Clamp green channel to valid range (0–255)
+        for i, (x, y) in enumerate(self.snake_points):
             green = min(255, 160 + i * 2)
             color = (0, green, 120)
 
-            pg.draw.circle(self.screen, color, (int(p[0]), int(p[1])), size)
+            rect = pg.Rect(
+                x - BLOCK_SIZE // 2,
+                y - BLOCK_SIZE // 2,
+                BLOCK_SIZE,
+                BLOCK_SIZE
+            )
+
+            pg.draw.rect(self.screen, color, rect)
+
+
 
 
     def run(self):
@@ -201,6 +245,7 @@ class Menu:
             pg.display.flip()
             self.clock.tick(60)
 
+
 class GameOverScreen:
     def __init__(self, screen, clock, len=None, win_w=1080, win_h=720, *args, **kwargs):
         self.screen = screen
@@ -211,8 +256,8 @@ class GameOverScreen:
 
         self.running = True
 
-        self.title_font = pg.font.SysFont(None, 110)
-        self.small_font = pg.font.SysFont(None, 32)
+        self.title_font = pg.font.Font("media/billo.TTF", 110)
+        self.small_font = pg.font.Font("media/billo.TTF", 32)
 
         self.retry_btn = Button("Retry (R)", (win_w // 2, win_h // 2))
         self.menu_btn = Button("Main Menu (Enter)", (win_w // 2, win_h // 2 + 100))
