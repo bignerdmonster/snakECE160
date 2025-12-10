@@ -366,6 +366,12 @@ def snakeGame(menu, snake, progress): ## this is the actual main game loop funct
                     musicBox()
                 if keysPressed[pg.K_RETURN]:
                     Apple() # make apple.
+                if keysPressed[pg.K_BACKSLASH]:
+                    PopUps()
+                if keysPressed[pg.K_RSHIFT]:
+                    QTE()
+                if keysPressed[pg.K_RIGHTBRACKET]:
+                    snake.len += 1
                 snake.move() # then move snake afterwards.
                 if (random.randint(0, 120) < 1) and (not QTE._instance) and ("QTE" in progress.unlocked): # 33% chance to spawn a QTE if one is not active
                         QTE()
