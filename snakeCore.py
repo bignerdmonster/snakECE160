@@ -215,7 +215,7 @@ class musicBox(Clickable):
         self.rect.scale_by_ip(9,7)
         self.time = musicBox.maxTime
         self.color = pg.color.Color(0, 0, 255, 76)
-        #self.last_tick = pg.time.get_ticks() but in Clickable
+        #self.last_tick = pg.time.get_ticks() but now defined in Clickable
     def render(self, screenV = screen):
         #I need this to be translucent lmao
         current_time = pg.time.get_ticks()
@@ -230,14 +230,14 @@ class musicBox(Clickable):
         if self.clicked() and self.time < musicBox.maxTime:
             self.time += 2 #sloow wind. 
         if self.time <= 0:
-            pg.event.post(game_over) # faahhhhhh        
+            pg.event.post(game_over) # forgot to add this lol        
 
 class PopUps(Clickable):
     def __init__(self, pos=None):
         super().__init__((pos or [random.randint(0,COLUMN_COUNT),random.randint(0,ROW_COUNT)]))
         self.color = popUpColor
         self.rect.scale_by_ip(3.7,3.7)
-        self.timeScale = 5000
+        self.timeScale = 3600
 
     def render(self, screenV=screen):
         if pg.time.get_ticks() - self.last_tick >= self.timeScale:
@@ -375,8 +375,6 @@ def snakeGame(menu, snake, progress): ## this is the actual main game loop funct
                 gos = GameOverScreen(screen=screen, clock=clock, win_h=SCREEN_HEIGHT, win_w=SCREEN_WIDTH, finalLength=snake.len)
                 gos.run()
                 run = False
-        if keysPressed[pg.K_ESCAPE]:
-            run = False # goes to next menu, outside of the SNAKE_EVENT tracker because I want to be able to quit/pause at any time, as compared to whenever the snake moves.
         
         snake.steer(keysPressed) # alter the snake movement vector based on keypresses. 
         GameObject.Render(screen) # to be clear, renders all game objects.
