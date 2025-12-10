@@ -368,7 +368,7 @@ def snakeGame(menu, snake, progress): ## this is the actual main game loop funct
                     Apple() # make apple.
                 if keysPressed[pg.K_BACKSLASH]:
                     PopUps()
-                if keysPressed[pg.K_RSHIFT]:
+                if keysPressed[pg.K_RSHIFT] and not QTE._instance:
                     QTE()
                 if keysPressed[pg.K_RIGHTBRACKET]:
                     snake.len += 1
