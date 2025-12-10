@@ -3,7 +3,7 @@ import random, math
 from menu import Menu, GameOverScreen
 
 framerate = 60 # independent of snake movement, ensures smoothish gameplay
-SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080 ## IDEAL
+SCREEN_WIDTH, SCREEN_HEIGHT = 1080, 1080 ## IDEAL
 COLUMN_COUNT, ROW_COUNT = 61, 61 ## disgustingly out of fn. scope
 #logic to figure out square height & stuff
 CELL_LENGTH = SCREEN_WIDTH // COLUMN_COUNT
@@ -171,7 +171,6 @@ class Snake(GameObject):
         while len(SnakeTail.tailList) > self.len: # needs to be while, for all the times when i trim the snake more than 1 unit
 
             SnakeTail.Sever() ## remove tail if array is bigger than length
-            ## todo: figure out triple collision!?!?!? update: it doesn't matter, we just can ignore it for now -- update -- we're leaving it like that
         if self.specialFlags.get("debugPrint", False): # we can actaully adapt this system for like a boost or whatever.
             Apple.Reset()
             self.specialFlags["debugPrint"] = False # since inputs are processed 24/7, this allows a certain action to be queued, then happen when the snake moves. Works well!
@@ -227,9 +226,11 @@ class musicBox(Clickable):
 
         text = font.render(f"Time: {self.time // 60}", True, (255, 255, 255))
         screenV.blit(text, (self.rect.x + 10, self.rect.y + 15)) # render text to screen
-
+        
         if self.clicked() and self.time < musicBox.maxTime:
-            self.time += 2 #sloow wind.         
+            self.time += 2 #sloow wind. 
+        if self.time <= 0:
+            pg.event.post(game_over) # faahhhhhh        
 
 class PopUps(Clickable):
     def __init__(self, pos=None):
