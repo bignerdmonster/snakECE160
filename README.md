@@ -1,4 +1,4 @@
-# Snake! – Final Project Overview
+# [snakECE160](https://github.com/bignerdmonster/snakECE160) – Final Project Overview
 
 This repository contains a Pygame-based reimagining of the classic Snake arcade game. It adds an animated neon-styled menu, unlockable mid-game events, multiple backgrounds, music cues, and quick-time mini-events to keep runs dynamic. Use this README as the required project handout that accompanies the presentation, zip submission, and demo.
 
@@ -12,10 +12,10 @@ This repository contains a Pygame-based reimagining of the classic Snake arcade 
   - `images/` & `media/` – art, music, and fonts used by the game.
 
 ## Setup & Run Instructions
-1. **Install Python 3.10+** and ensure `pip` is available.
+1. **Install Python 3.14.x** and ensure `pip` is available. -- https://python.org/downloads
 2. **Install dependencies:**
    ```bash
-   pip install pygame
+   pip install pygame-ce
    ```
 3. **Run the game:**
    ```bash
@@ -38,19 +38,10 @@ This repository contains a Pygame-based reimagining of the classic Snake arcade 
 
 ## Team Member Contributions
 List each teammate and the module or feature they owned so grading aligns with individual presentations. Example structure (edit with your names as needed):
-- **Felix Bryan (bignerdmonster/flexi b):** Core snake logic, progression unlocks, special apple behaviors, and overall game loop integration.
-- **Alan Le (ToastPixel):** Visual polish (background swaps, neon aesthetic), quick-time event implementation, and QTE/milestone tuning.
-- **ajk7-debug:** Bug fixes, testing assists, and supporting tweaks to controls or timers.
-
-Ensure each student’s slide deck references the code they wrote and how it interfaces with the rest of the project.
-
-## Presentation & Submission Checklist
-- Slides cover project title/goal, visuals, code excerpts for each student, AI usage notes, challenges, and a fallback demo clip.
-- Live or recorded demo prepared; be ready to pull up any source file (`snakeCore.py`, `menu.py`) to answer technical questions.
-- Include `README.txt` (this content), full project code, media assets, and presentation PDF in the final ZIP. Add an optional recorded demo video if available.
+- **Felix (bignerdmonster/flexi b):** Core snake logic, overall game loop integration, and GameObject manager.
+- **Alan (ToastPixel):** Visual polish (background swaps, neon aesthetic), quick-time event implementation, and QTE/milestone tuning.
+- **Achilles (akj7-debug):** Bug fixes, testing assists, and supporting tweaks to controls or timers.
 
 ## Troubleshooting
 - If fonts/audio fail to load, confirm working directory is the repository root so relative paths to `images/` and `media/` resolve correctly.
-- For performance issues, lower the window size in `snakeCore.py` by adjusting `SCREEN_WIDTH`/`SCREEN_HEIGHT`, or disable `vsync` in the display creation.
-
-Enjoy the game, and good luck with your presentation!
+- For performance issues, lower the window size in `snakeCore.py` by adjusting `SCREEN_WIDTH`/`SCREEN_HEIGHT`, or disable `vsync` in the display creation (**NOT RECCOMENDED**)
