@@ -37,7 +37,7 @@ This repository contains a Pygame-based reimagining of the classic Snake arcade 
 - Background cycling tied to score milestones and a dedicated game-over experience with shake effects.
 
 ## Team Member Contributions
-List each teammate and the module or feature they owned so grading aligns with individual presentations. Example structure (edit with your names as needed):
+"List each teammate and the module or feature they owned so grading aligns with individual presentations."
 - **Felix (bignerdmonster/flexi b):** Core snake logic, overall game loop integration, and GameObject manager.
 - **Alan (ToastPixel):** Visual polish (background swaps, neon aesthetic), quick-time event implementation, and QTE/milestone tuning.
 - **Achilles (akj7-debug):** Bug fixes, testing assists, and supporting tweaks to controls or timers.
