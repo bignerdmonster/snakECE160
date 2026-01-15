@@ -1,7 +1,7 @@
 # [snakECE160](https://github.com/bignerdmonster/snakECE160) – Final Project Overview
 
 This repository contains a Pygame-based reimagining of the classic Snake arcade game. It adds an animated neon-styled menu, unlockable mid-game events, multiple backgrounds, music cues, and quick-time mini-events to keep runs dynamic. Use this README as the required project handout that accompanies the presentation, zip submission, and demo.
-
+I'm making a commit to test git credential management, sorry guys :P 
 ## Program Summary
 - **Goal:** Deliver a visual, interactive Python game that showcases event-driven programming, state management, and creative UI polish suitable for a 15–20 minute final presentation.
 - **Gameplay:** Guide a continuously moving snake across a 61×61 grid, collect apples to grow, and survive as long as possible while optional quick-time events (QTEs), pop-up messages, and music boxes appear as milestones are reached.
